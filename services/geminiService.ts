@@ -1,0 +1,84 @@
+
+import { GoogleGenAI, SchemaType } from "@google/genai";
+import { AnalysisResult } from "../types";
+
+const SYSTEM_INSTRUCTION = `
+Ти — експерт-психолог з багаторічним стажем у дитячій психодіагностиці. Твоя спеціалізація — аналіз проєктивних методик для визначення рівня когнітивного розвитку дітей молодшого шкільного віку (6-10 років).
+
+Твоя мета: Проаналізувати наданий малюнок та повернути структурований JSON об'єкт.
+
+ВАЖЛИВО:
+1. Якщо на малюнку є підпис, ім'я дитини або будь-який інший текст, його слід повністю виключити з аналізу. Зосередься виключно на графічних елементах.
+2. Всі оцінки (Низький/Середній/Високий) мають бути СТРОГО калібровані відповідно до вікових норм 6-10 років. Те, що є примітивним для дорослого, може бути нормою для 6-річної дитини.
+
+АЛГОРИТМ РОБОТИ:
+1. Ідентифікація методики: Визнач, до якої з двох методик належить малюнок: "Неіснуюча тварина" або "Дім-Дерево-Родина". Інші варіанти (наприклад, "вільний малюнок") заборонені.
+2. Аналіз графічних ознак (натиск, лінії, штрихування).
+3. Аналіз деталізації та змісту (логіка, частини тіла, елементи).
+4. Психологічні гіпотези (тривожність, агресія, ресурсність).
+5. Оцінка рівня когнітивного розвитку (Низький/Середній/Високий) з обґрунтуванням, що базується на стандартах для віку 6-10 років.
+6. Рекомендації для батьків/педагогів дітей цього віку.
+
+ФОРМАТ ВІДПОВІДІ (JSON):
+{
+  "methodology": "Назва методики (Тільки 'Неіснуюча тварина' або 'Дім-Дерево-Родина')",
+  "graphic_analysis": "Текст опису графічних ознак...",
+  "detailing": "Текст аналізу деталей та логіки...",
+  "psycho_features": "Текст гіпотез щодо психологічного стану...",
+  "cognitive_level": {
+    "level": "Високий / Середній / Низький",
+    "reasoning": "Текст обґрунтування з посиланням на норми 6-10 років..."
+  },
+  "recommendations": "Текст рекомендацій..."
+}
+`;
+
+export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResult> => {
+  if (!process.env.API_KEY) {
+    throw new Error("API Key is missing in environment variables.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+  const base64Data = base64Image.includes('base64,') 
+    ? base64Image.split('base64,')[1] 
+    : base64Image;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      config: {
+        systemInstruction: SYSTEM_INSTRUCTION,
+        responseMimeType: 'application/json',
+      },
+      contents: {
+        parts: [
+          {
+            inlineData: {
+              mimeType: 'image/jpeg',
+              data: base64Data
+            }
+          },
+          {
+            text: "Проаналізуй малюнок дитини (6-10 років) і поверни результат виключно у форматі JSON згідно інструкції."
+          }
+        ]
+      }
+    });
+
+    if (response.text) {
+      try {
+        const jsonResponse = JSON.parse(response.text) as AnalysisResult;
+        return jsonResponse;
+      } catch (parseError) {
+        console.error("JSON Parse Error:", parseError);
+        throw new Error("Failed to parse AI response.");
+      }
+    } else {
+      throw new Error("No text response received from AI.");
+    }
+  } catch (error) {
+    console.error("Gemini Analysis Error:", error);
+    throw error;
+  }
+};
