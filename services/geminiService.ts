@@ -33,14 +33,11 @@ const SYSTEM_INSTRUCTION = `
 `;
 
 export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResult> => {
-  // Use import.meta.env which is the standard for Vite applications.
-  // We access VITE_GOOGLE_API_KEY as configured in Vercel.
-  // @ts-ignore
-  const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
+  // Вставте ваш API ключ сюди, якщо не використовуєте змінні середовища
+  const apiKey = '';
 
   if (!apiKey) {
-    console.error("API Key is missing! Please check your Vercel Environment Variables. Variable name must be 'VITE_GOOGLE_API_KEY'.");
-    throw new Error("API Key configuration error.");
+    throw new Error("API Key is missing.");
   }
 
   const ai = new GoogleGenAI({ apiKey: apiKey });
