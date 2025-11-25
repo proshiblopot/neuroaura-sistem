@@ -34,15 +34,7 @@ const SYSTEM_INSTRUCTION = `
 `;
 
 export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResult> => {
-  // Use process.env.API_KEY as per @google/genai guidelines
-  const apiKey = process.env.API_KEY;
-
-  if (!apiKey) {
-    console.error("API Key is missing. Please check process.env.API_KEY.");
-    throw new Error("API Key is missing.");
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const base64Data = base64Image.includes('base64,') 
     ? base64Image.split('base64,')[1] 
