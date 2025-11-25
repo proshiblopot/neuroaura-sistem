@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Header } from './components/Header';
 import { ImageUploader } from './components/ImageUploader';
@@ -82,7 +81,7 @@ const App: React.FC = () => {
     <div className="min-h-screen">
       <Header />
 
-      <main className="max-w-3xl mx-auto px-4 py-6 pb-20">
+      <main className="max-w-3xl mx-auto px-4 py-6">
         {/* Main Content Area */}
         <div className="space-y-8">
           

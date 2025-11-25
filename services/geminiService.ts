@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { AnalysisResult } from "../types";
 
@@ -8,7 +7,7 @@ const SYSTEM_INSTRUCTION = `
 Твоя мета: Проаналізувати наданий малюнок та повернути структурований JSON об'єкт.
 
 ВАЖЛИВО:
-1. Якщо на малюнку є підпис, ім'я дитини або будь-який інший текст, його слід повністю виключити з аналізу. Зосередься виключно на графічних елементах.
+1. Якщо на малюнку є підпис, ім'я дитини, його слід повністю виключити з аналізу. Зосередься виключно на графічних елементах.
 2. Всі оцінки (Низький/Середній/Високий) мають бути СТРОГО калібровані відповідно до вікових норм 6-10 років. Те, що є примітивним для дорослого, може бути нормою для 6-річної дитини.
 
 АЛГОРИТМ РОБОТИ:
@@ -34,13 +33,14 @@ const SYSTEM_INSTRUCTION = `
 `;
 
 export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResult> => {
-  // Використовуємо import.meta.env для доступу до змінних середовища у Vite/Vercel
-  // @ts-ignore - ігноруємо помилку TS, якщо типи Vite не налаштовані, бо це працює в runtime
+  // Use import.meta.env which is the standard for Vite applications.
+  // We access VITE_GOOGLE_API_KEY as configured in Vercel.
+  // @ts-ignore
   const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
 
   if (!apiKey) {
-    console.error("API Key is missing! Check Vercel Environment Variables.");
-    throw new Error("API Key is missing.");
+    console.error("API Key is missing! Please check your Vercel Environment Variables. Variable name must be 'VITE_GOOGLE_API_KEY'.");
+    throw new Error("API Key configuration error.");
   }
 
   const ai = new GoogleGenAI({ apiKey: apiKey });
