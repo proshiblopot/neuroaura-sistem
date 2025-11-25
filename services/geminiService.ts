@@ -34,7 +34,16 @@ const SYSTEM_INSTRUCTION = `
 `;
 
 export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResult> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  // Використовуємо import.meta.env для доступу до змінних середовища у Vite/Vercel
+  // @ts-ignore - ігноруємо помилку TS, якщо типи Vite не налаштовані, бо це працює в runtime
+  const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
+
+  if (!apiKey) {
+    console.error("API Key is missing! Check Vercel Environment Variables.");
+    throw new Error("API Key is missing.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey: apiKey });
 
   const base64Data = base64Image.includes('base64,') 
     ? base64Image.split('base64,')[1] 
