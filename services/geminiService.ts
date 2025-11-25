@@ -1,5 +1,4 @@
-
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult } from "../types";
 
 const SYSTEM_INSTRUCTION = `
@@ -34,6 +33,7 @@ const SYSTEM_INSTRUCTION = `
 `;
 
 export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResult> => {
+  // Fix: Use process.env.API_KEY as per guidelines.
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const base64Data = base64Image.includes('base64,') 
@@ -46,6 +46,25 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            methodology: { type: Type.STRING },
+            graphic_analysis: { type: Type.STRING },
+            detailing: { type: Type.STRING },
+            psycho_features: { type: Type.STRING },
+            cognitive_level: {
+              type: Type.OBJECT,
+              properties: {
+                level: { type: Type.STRING },
+                reasoning: { type: Type.STRING },
+              },
+              required: ["level", "reasoning"],
+            },
+            recommendations: { type: Type.STRING },
+          },
+          required: ["methodology", "graphic_analysis", "detailing", "psycho_features", "cognitive_level", "recommendations"],
+        },
       },
       contents: {
         parts: [
