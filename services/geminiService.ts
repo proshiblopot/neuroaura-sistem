@@ -33,7 +33,8 @@ const SYSTEM_INSTRUCTION = `
 `;
 
 export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResult> => {
-  // Fix: Use process.env.API_KEY as per guidelines.
+  // Use process.env.API_KEY as per guidelines. 
+  // Assume this variable is pre-configured, valid, and accessible.
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const base64Data = base64Image.includes('base64,') 
