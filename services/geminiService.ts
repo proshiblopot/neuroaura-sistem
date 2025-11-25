@@ -33,14 +33,7 @@ const SYSTEM_INSTRUCTION = `
 `;
 
 export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResult> => {
-  // Вставте ваш API ключ сюди, якщо не використовуєте змінні середовища
-  const apiKey = '';
-
-  if (!apiKey) {
-    throw new Error("API Key is missing.");
-  }
-
-  const ai = new GoogleGenAI({ apiKey: apiKey });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const base64Data = base64Image.includes('base64,') 
     ? base64Image.split('base64,')[1] 
