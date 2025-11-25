@@ -1,5 +1,5 @@
 
-import { GoogleGenAI, SchemaType } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { AnalysisResult } from "../types";
 
 const SYSTEM_INSTRUCTION = `
@@ -34,10 +34,7 @@ const SYSTEM_INSTRUCTION = `
 `;
 
 export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResult> => {
-  if (!process.env.API_KEY) {
-    throw new Error("API Key is missing in environment variables.");
-  }
-
+  // Fix: Use process.env.API_KEY as per guidelines.
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const base64Data = base64Image.includes('base64,') 
