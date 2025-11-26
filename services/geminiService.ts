@@ -33,9 +33,17 @@ const SYSTEM_INSTRUCTION = `
 `;
 
 export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResult> => {
-  // Use process.env.API_KEY as per guidelines.
-  // Assume process.env.API_KEY is pre-configured and accessible.
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  // CRITICAL FIX FOR VERCEL/VITE:
+  // We utilize import.meta.env.VITE_GOOGLE_API_KEY because Vite does not polyfill process.env in the browser.
+  // We use 'as any' to bypass potential TS restrictions in some environments, ensuring the build passes.
+  const apiKey = (import.meta as any).env.VITE_GOOGLE_API_KEY;
+
+  if (!apiKey) {
+    console.error("CRITICAL ERROR: API Key is missing. Make sure VITE_GOOGLE_API_KEY is set in Vercel Environment Variables.");
+    throw new Error("API Key is missing. Please configure VITE_GOOGLE_API_KEY.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
 
   let mimeType = 'image/jpeg';
   let base64Data = base64Image;
