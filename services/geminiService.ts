@@ -33,11 +33,24 @@ const SYSTEM_INSTRUCTION = `
 `;
 
 export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResult> => {
+  // Use process.env.API_KEY as per guidelines.
+  // Assume process.env.API_KEY is pre-configured and accessible.
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-  const base64Data = base64Image.includes('base64,') 
-    ? base64Image.split('base64,')[1] 
-    : base64Image;
+  let mimeType = 'image/jpeg';
+  let base64Data = base64Image;
+
+  if (base64Image.includes('base64,')) {
+    const parts = base64Image.split('base64,');
+    base64Data = parts[1];
+    
+    // Attempt to extract mime type from header like "data:image/png;base64,"
+    const header = parts[0];
+    const match = header.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);/);
+    if (match && match[1]) {
+      mimeType = match[1];
+    }
+  }
 
   try {
     const response = await ai.models.generateContent({
@@ -69,7 +82,7 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
         parts: [
           {
             inlineData: {
-              mimeType: 'image/jpeg',
+              mimeType: mimeType,
               data: base64Data
             }
           },
