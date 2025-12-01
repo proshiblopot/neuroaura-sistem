@@ -33,8 +33,17 @@ const SYSTEM_INSTRUCTION = `
 `;
 
 export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResult> => {
-  // Use standard process.env.API_KEY as strictly required by the environment
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  // CRITICAL FIX FOR VERCEL/VITE:
+  // We utilize import.meta.env.VITE_GOOGLE_API_KEY because Vite does not polyfill process.env in the browser.
+  // We use 'as any' to bypass potential TS restrictions in some environments, ensuring the build passes.
+  const apiKey = (import.meta as any).env.VITE_GOOGLE_API_KEY;
+
+  if (!apiKey) {
+    console.error("CRITICAL ERROR: API Key is missing. Make sure VITE_GOOGLE_API_KEY is set in Vercel Environment Variables.");
+    throw new Error("API Key is missing. Please configure VITE_GOOGLE_API_KEY.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
 
   let mimeType = 'image/jpeg';
   let base64Data = base64Image;
@@ -43,7 +52,6 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
     const parts = base64Image.split('base64,');
     base64Data = parts[1];
     
-    // Attempt to extract mime type from header like "data:image/png;base64,"
     const header = parts[0];
     const match = header.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);/);
     if (match && match[1]) {
@@ -55,7 +63,7 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       config: {
-        temperature: 0, // Absolute zero for strict determinism and clinical reproducibility
+        temperature: 0,
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: 'application/json',
         responseSchema: {
