@@ -62,8 +62,9 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-pro-preview',
       config: {
+        temperature: 0, // Absolute zero for strict determinism and clinical reproducibility
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: 'application/json',
         responseSchema: {
