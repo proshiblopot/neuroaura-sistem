@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult } from "../types";
 
@@ -32,6 +33,9 @@ const SYSTEM_INSTRUCTION = `
 }
 `;
 
+// Helper function to wait
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResult> => {
   // CRITICAL FIX FOR VERCEL/VITE:
   // We utilize import.meta.env.VITE_GOOGLE_API_KEY because Vite does not polyfill process.env in the browser.
@@ -60,9 +64,8 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
     }
   }
 
-  // Define common configuration for both attempts
-  const commonConfig = {
-    temperature: 0, // Strict deterministic output for both models
+  const config = {
+    temperature: 0, // Strict deterministic output
     systemInstruction: SYSTEM_INSTRUCTION,
     responseMimeType: 'application/json',
     responseSchema: {
@@ -100,44 +103,44 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
     ]
   };
 
-  try {
-    // ATTEMPT 1: Primary Model (Gemini 3 Pro Preview)
-    console.log("Attempting analysis with Primary Model: gemini-3-pro-preview");
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
-      config: commonConfig,
-      contents: requestContents
-    });
+  // RETRY LOGIC for 429 Errors
+  const MAX_RETRIES = 3;
+  let attempt = 0;
 
-    if (!response.text) throw new Error("No text response received from AI (Primary).");
-    return JSON.parse(response.text) as AnalysisResult;
+  while (attempt < MAX_RETRIES) {
+    try {
+      console.log(`Attempting analysis with gemini-3-pro-preview (Attempt ${attempt + 1}/${MAX_RETRIES})`);
+      
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-pro-preview',
+        config: config,
+        contents: requestContents
+      });
 
-  } catch (error: any) {
-    console.warn("Primary model failed.", error);
+      if (!response.text) throw new Error("No text response received from AI.");
+      return JSON.parse(response.text) as AnalysisResult;
 
-    // Check for Quota Exceeded (429) or Service Unavailable (503)
-    // If it's a quota issue, we fallback to Flash.
-    if (error.message?.includes('429') || error.status === 429 || error.status === 503) {
-        console.log("Quota exceeded or service busy. Falling back to Secondary Model: gemini-2.5-flash");
-        
-        try {
-            // ATTEMPT 2: Fallback Model (Gemini 2.5 Flash)
-            const fallbackResponse = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                config: commonConfig, // Keep temperature 0 for consistency
-                contents: requestContents
-            });
+    } catch (error: any) {
+      console.warn(`Attempt ${attempt + 1} failed.`, error);
 
-            if (!fallbackResponse.text) throw new Error("No text response received from AI (Fallback).");
-            return JSON.parse(fallbackResponse.text) as AnalysisResult;
-
-        } catch (fallbackError: any) {
-            console.error("Fallback model also failed:", fallbackError);
-            throw new Error("Сервіс тимчасово перевантажений (всі моделі зайняті). Будь ласка, спробуйте пізніше.");
+      // If error is 429 (Too Many Requests) or 503 (Service Unavailable), we wait and retry
+      if (error.message?.includes('429') || error.status === 429 || error.status === 503) {
+        attempt++;
+        if (attempt < MAX_RETRIES) {
+          // Exponential backoff: 2s, 4s, 8s...
+          const waitTime = 2000 * Math.pow(2, attempt - 1);
+          console.log(`Quota limit hit. Retrying in ${waitTime}ms...`);
+          await delay(waitTime);
+          continue;
+        } else {
+          throw new Error("Сервери Google перевантажені (ліміт запитів). Будь ласка, зачекайте хвилину і спробуйте знову. (429 Quota Exceeded)");
         }
-    }
+      }
 
-    // If it's another type of error (e.g. invalid key, parsing error), rethrow it.
-    throw error;
+      // If it's a different error, throw immediately
+      throw error;
+    }
   }
+  
+  throw new Error("Unknown error occurred during analysis.");
 };
