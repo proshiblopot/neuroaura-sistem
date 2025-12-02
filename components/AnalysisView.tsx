@@ -1,6 +1,6 @@
 import React from 'react';
 import { AnalysisStatus, AnalysisResult } from '../types';
-import { BookOpen, PenTool, Eye, Lightbulb, GraduationCap, HeartHandshake } from 'lucide-react';
+import { BookOpen, PenTool, Eye, Lightbulb, GraduationCap, HeartHandshake, Download } from 'lucide-react';
 
 interface AnalysisViewProps {
   status: AnalysisStatus;
@@ -8,6 +8,51 @@ interface AnalysisViewProps {
 }
 
 export const AnalysisView: React.FC<AnalysisViewProps> = ({ status, result }) => {
+  const handleDownload = () => {
+    if (!result) return;
+
+    const date = new Date().toLocaleDateString('uk-UA');
+    const time = new Date().toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+
+    const reportContent = `
+NEUROAURA - ЗВІТ НЕЙРОПСИХОЛОГІЧНОГО АНАЛІЗУ
+Дата: ${date} о ${time}
+--------------------------------------------------
+
+1. МЕТОДИКА:
+${result.methodology}
+
+2. ГРАФІЧНИЙ АНАЛІЗ:
+${result.graphic_analysis}
+
+3. ДЕТАЛІЗАЦІЯ ТА ЗМІСТ:
+${result.detailing}
+
+4. ПСИХОЛОГІЧНІ ОСОБЛИВОСТІ:
+${result.psycho_features}
+
+5. ОЦІНКА КОГНІТИВНОГО РОЗВИТКУ:
+Рівень: ${result.cognitive_level.level}
+Обґрунтування: ${result.cognitive_level.reasoning}
+
+6. РЕКОМЕНДАЦІЇ:
+${result.recommendations}
+
+--------------------------------------------------
+Важлива примітка: Цей аналіз сформовано штучним інтелектом. Він є попереднім і не замінює професійної консультації лікаря або психолога.
+`.trim();
+
+    const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `NeuroAura_Analiz_${Date.now()}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   if (status === AnalysisStatus.LOADING) {
     return (
       <div className="bg-white rounded-2xl p-10 border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center mt-6 min-h-[350px]">
@@ -146,6 +191,17 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ status, result }) =>
           <p className="text-slate-800 leading-relaxed text-lg pl-11 italic">
             {result.recommendations}
           </p>
+        </div>
+
+        {/* Кнопка скачування */}
+        <div className="flex justify-center mt-8">
+            <button 
+                onClick={handleDownload}
+                className="flex items-center gap-2 px-8 py-3 bg-white border-2 border-[#4B0082] text-[#4B0082] rounded-xl font-bold hover:bg-[#F3F0FF] transition-all transform hover:scale-105 shadow-sm"
+            >
+                <Download className="w-5 h-5" />
+                Завантажити Звіт
+            </button>
         </div>
 
       </div>

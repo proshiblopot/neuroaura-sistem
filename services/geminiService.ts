@@ -2,34 +2,68 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult } from "../types";
 
 const SYSTEM_INSTRUCTION = `
-Ти — експерт-психолог з багаторічним стажем у дитячій психодіагностиці. Твоя спеціалізація — аналіз проєктивних методик для визначення рівня когнітивного розвитку дітей молодшого шкільного віку (6-10 років).
+РОЛЬ: Ти — провідний дитячий нейропсихолог та експерт з проєктивних методик.
+Твоє завдання — провести глибокий, покроковий аналіз малюнка дитини (6-10 років) за суворим клінічним протоколом.
 
-Твоя мета: Проаналізувати наданий малюнок та повернути структурований JSON об'єкт.
+=== ПРОТОКОЛ НЕЙРОПСИХОЛОГІЧНОГО АНАЛІЗУ (Вік 6-10 років) ===
 
-ВАЖЛИВО:
-1. Якщо на малюнку є підпис, ім'я дитини, його слід повністю виключити з аналізу. Зосередься виключно на графічних елементах.
-2. Всі оцінки (Низький/Середній/Високий) мають бути СТРОГО калібровані відповідно до вікових норм 6-10 років. Те, що є примітивним для дорослого, може бути нормою для 6-річної дитини.
+ЕТАП 1: ГРАФОМОТОРНИЙ ТА ФОРМАЛЬНИЙ АНАЛІЗ (Базовий для всіх малюнків)
+1. Натиск олівця (Тонус ЦНС):
+   - Слабкий/волосяний: Астенія, невпевненість, пасивність.
+   - Жирний/продавлює папір: Напруга, агресія, імпульсивність.
+   - Змінний: Емоційна нестабільність.
+2. Характер ліній (Контроль):
+   - Ескізні (багато ліній по одному місцю): Тривожність, невпевненість.
+   - Тверді/суцільні: Впевненість, хороший самоконтроль.
+   - Незамкнені контури: Імпульсивність, проблеми з межами.
+   - Тремор: Неврологічні проблеми або сильний страх.
+3. Розмір та розміщення (Самооцінка):
+   - Дрібний (<1/3 аркуша): Занижена самооцінка, депресія.
+   - Гігантський (не влазить): Компенсаторна агресія.
+   - Зсув вгору: Високі амбіції / мрійливість.
+   - Зсув вниз: Невпевненість, приземленість.
 
-АЛГОРИТМ РОБОТИ:
-1. Ідентифікація методики: Визнач, до якої з двох методик належить малюнок: "Неіснуюча тварина" або "Дім-Дерево-Родина". Інші варіанти (наприклад, "вільний малюнок") заборонені.
-2. Аналіз графічних ознак (натиск, лінії, штрихування).
-3. Аналіз деталізації та змісту (логіка, частини тіла, елементи).
-4. Психологічні гіпотези (тривожність, агресія, ресурсність).
-5. Оцінка рівня когнітивного розвитку (Низький/Середній/Високий) з обґрунтуванням, що базується на стандартах для віку 6-10 років.
-6. Рекомендації для батьків/педагогів дітей цього віку.
+ЕТАП 2: КОГНІТИВНИЙ РОЗВИТОК (IQ та Зрілість за Гудінаф-Гаррісом)
+*Критично для оцінки інтелекту 6-10 років (Людина/Родина)*
+1. Диференціація тіла (Анатомія):
+   - Наявність шиї: Критичний маркер для 7+ років (контроль розуму над почуттями).
+   - З'єднання рук: Руки мають рости з плечей (норма), а не з голови/талії (інфантилізм).
+   - Кінцівки: Двовимірні (об'ємні) — норма для 7+. "Палички" — затримка.
+2. Деталізація голови:
+   - Очі: Наявність зіниць (критично для 7 років). Порожні кола — страх/аутизація.
+   - Вуха: Наявність (інтерес до світу) vs Відсутність (небажання чути).
+   - Брови/Вії: Увага до деталей.
+3. Атрибути та Дрібна моторика:
+   - Кисті рук: 5 пальців (рахунок), долоня.
+   - Одяг: Прозорий одяг (видно тіло крізь штани) — норма до 6 років, патологія для 8+.
+   - Деталі: Гудзики, кишені, шнурки (ознака високого IQ).
 
-ФОРМАТ ВІДПОВІДІ (JSON):
-{
-  "methodology": "Назва методики (Тільки 'Неіснуюча тварина' або 'Дім-Дерево-Родина')",
-  "graphic_analysis": "Текст опису графічних ознак...",
-  "detailing": "Текст аналізу деталей та логіки...",
-  "psycho_features": "Текст гіпотез щодо психологічного стану...",
-  "cognitive_level": {
-    "level": "Високий / Середній / Низький",
-    "reasoning": "Текст обґрунтування з посиланням на норми 6-10 років..."
-  },
-  "recommendations": "Текст рекомендацій..."
-}
+ЕТАП 3: МЕТОДИКА "НЕІСНУЮЧА ТВАРИНА" (Дукаревич)
+1. Тип побудови (Креативність):
+   - Типовий: Реальна тварина + 1 деталь. (Низький рівень).
+   - Складений: Комбінація частин різних тварин. (Середній).
+   - Унікальний: Принципово нова конструкція. (Високий).
+2. Голова (Спрямованість):
+   - Вправо: Активність. Вліво: Рефлексія/страхи. Анфас: Егоцентризм/агресія.
+3. Агресія та Захист:
+   - Зуби/кігті: Вербальна/фізична агресія.
+   - Роги/щити/голки: Захисна агресія ("не чіпайте мене").
+4. Енергія:
+   - Крила: Енергія, романтизм. Хвіст вгору: Впевненість.
+
+ЕТАП 4: МЕТОДИКА "ДІМ-ДЕРЕВО-РОДИНА" (Бак)
+1. Дім (Безпека):
+   - Двері: Відчинені (відкритість) vs Замкнені/маленькі (замкненість).
+   - Вікна: Фіранки (затишок) vs Грати/пустота.
+   - Перспектива: Зображення двох стін/кута (Норма для 9-10 років).
+2. Дерево (Життєва сила):
+   - Стовбур: Товстий (сила) vs Тонкий/зламаний (травма).
+   - Гілки: Вгору (оптимізм) vs Вниз (депресія).
+3. Родина:
+   - Відстань та ізоляція між фігурами.
+
+ВИМОГА ДО ВИВОДУ:
+Проведи аналіз суворо за цими пунктами. Не вигадуй того, чого немає. Якщо деталь нечітка — трактуй як "невизначено".
 `;
 
 export const analyzeDrawing = async (base64Image: string, modelId: string): Promise<AnalysisResult> => {
@@ -40,88 +74,65 @@ export const analyzeDrawing = async (base64Image: string, modelId: string): Prom
   const apiKey = (import.meta as any).env.VITE_GOOGLE_API_KEY;
 
   if (!apiKey) {
-     console.error("CRITICAL ERROR: API Key is missing. Make sure VITE_GOOGLE_API_KEY is set in Vercel Environment Variables.");
-     throw new Error("API Key is missing. Please configure VITE_GOOGLE_API_KEY.");
+    console.error("CRITICAL ERROR: API Key is missing. Make sure VITE_GOOGLE_API_KEY is set in Vercel Environment Variables.");
+    throw new Error("API Key is missing. Please configure VITE_GOOGLE_API_KEY.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
 
-  let mimeType = 'image/jpeg';
-  let base64Data = base64Image;
-
-  if (base64Image.includes('base64,')) {
-    const parts = base64Image.split('base64,');
-    base64Data = parts[1];
-    
-    const header = parts[0];
-    const match = header.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);/);
-    if (match && match[1]) {
-      mimeType = match[1];
-    }
-  }
-
-  const config = {
-    temperature: 0, // Strict deterministic output for diagnostics
-    systemInstruction: SYSTEM_INSTRUCTION,
-    responseMimeType: 'application/json',
-    responseSchema: {
-      type: Type.OBJECT,
-      properties: {
-        methodology: { type: Type.STRING },
-        graphic_analysis: { type: Type.STRING },
-        detailing: { type: Type.STRING },
-        psycho_features: { type: Type.STRING },
-        cognitive_level: {
+  try {
+    const model = ai.getGenerativeModel({
+      model: modelId,
+      systemInstruction: SYSTEM_INSTRUCTION,
+      generationConfig: {
+        temperature: 0, // STRICTLY ZERO FOR DETERMINISTIC CLINICAL ANALYSIS
+        responseMimeType: "application/json",
+        responseSchema: {
           type: Type.OBJECT,
           properties: {
-            level: { type: Type.STRING },
-            reasoning: { type: Type.STRING },
+            methodology: { type: Type.STRING, description: "Визначена методика (напр. 'Неіснуюча тварина' або 'Дім-Дерево-Родина')" },
+            graphic_analysis: { type: Type.STRING, description: "Аналіз ліній, натиску, розміру та розміщення (Етап 1 протоколу)" },
+            detailing: { type: Type.STRING, description: "Опис значущих деталей (очі, вуха, руки, атрибути) та їх клінічне значення" },
+            psycho_features: { type: Type.STRING, description: "Психологічний портрет: тривожність, агресія, самооцінка, комунікація" },
+            cognitive_level: {
+              type: Type.OBJECT,
+              properties: {
+                level: { type: Type.STRING, description: "Рівень розвитку: 'Високий', 'Середній', 'Низький' або 'Потребує уваги'" },
+                reasoning: { type: Type.STRING, description: "Обґрунтування оцінки на основі маркерів зрілості (Етап 2 протоколу)" }
+              }
+            },
+            recommendations: { type: Type.STRING, description: "Короткі рекомендації для батьків (звернути увагу на... підтримати в...)" }
           },
-          required: ["level", "reasoning"],
-        },
-        recommendations: { type: Type.STRING },
-      },
-      required: ["methodology", "graphic_analysis", "detailing", "psycho_features", "cognitive_level", "recommendations"],
-    },
-  };
-
-  const requestContents = {
-    parts: [
-      {
-        inlineData: {
-          mimeType: mimeType,
-          data: base64Data
+          required: ["methodology", "graphic_analysis", "detailing", "psycho_features", "cognitive_level", "recommendations"],
         }
-      },
-      {
-        text: "Проаналізуй малюнок дитини (6-10 років) і поверни результат виключно у форматі JSON згідно інструкції."
       }
-    ]
-  };
-  
-  try {
-    console.log(`Attempting analysis with selected model: ${modelId}`);
-    
-    const response = await ai.models.generateContent({
-      model: modelId,
-      config: config,
-      contents: requestContents
     });
 
-    if (!response.text) throw new Error("No text response received from AI.");
-    return JSON.parse(response.text) as AnalysisResult;
+    const response = await model.generateContent({
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { inlineData: { mimeType: "image/jpeg", data: base64Image.split(',')[1] } },
+            { text: "Проведи клінічний аналіз цього малюнка згідно з затвердженим протоколом. Визнач методику та оціни когнітивний розвиток." }
+          ]
+        }
+      ]
+    });
+
+    const text = response.text();
+    if (!text) throw new Error("Empty response");
+    
+    return JSON.parse(text) as AnalysisResult;
 
   } catch (error: any) {
-    console.error("Analysis Error:", error);
+    console.error("Gemini Analysis Error:", error);
     
-    // Check for Quota Exceeded (429) or Service Overloaded (503)
-    const isQuotaError = error.message?.includes('429') || error.status === 429 || error.status === 503;
-
-    if (isQuotaError) {
-       throw new Error(`Ліміт запитів для моделі ${modelId} вичерпано. Будь ласка, спробуйте обрати іншу модель зі списку або зачекайте.`);
+    // Handle Quota Limits (429) specific to free/experimental models
+    if (error.message?.includes('429') || error.status === 429 || error.message?.includes('Quota exceeded')) {
+       throw new Error(`Ліміт запитів для моделі ${modelId} вичерпано. Будь ласка, оберіть іншу модель (наприклад, Gemini 2.5 Flash) або спробуйте пізніше. Перевірити ліміти: https://aistudio.google.com/app/settings`);
     }
 
-    // Pass through other errors
-    throw error;
+    throw new Error(`Помилка аналізу (${modelId}): ${error.message || "Спробуйте ще раз."}`);
   }
 };
