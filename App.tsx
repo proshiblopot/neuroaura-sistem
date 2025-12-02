@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Header } from './components/Header';
 import { ImageUploader } from './components/ImageUploader';
@@ -36,7 +37,7 @@ const MODELS = [
   { id: 'gemini-2.0-flash-thinking-exp-01-21', name: 'Gemini 2.0 Thinking', desc: 'Глибоке мислення', icon: <Brain className="w-4 h-4" /> },
   { id: 'gemini-3-pro-preview', name: 'Gemini 3.0 Pro', desc: 'Найвищий інтелект', icon: <Sparkles className="w-4 h-4" /> },
   { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', desc: 'Стабільний Pro', icon: <Cpu className="w-4 h-4" /> },
-  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', desc: 'Швидкий, іноді помиляється', icon: <Zap className="w-4 h-4" /> },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', desc: 'Швидкий, але іноді помиляється', icon: <Zap className="w-4 h-4" /> },
 ];
 
 const App: React.FC = () => {
@@ -188,7 +189,8 @@ const App: React.FC = () => {
                     <Cpu className="w-6 h-6 text-[#4B0082]" />
                     <h3 className="font-bold text-slate-700 text-lg">Оберіть модель аналізу:</h3>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {/* Changed grid layout to 2 columns on sm+ screens */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {MODELS.map((model) => (
                       <button
                         key={model.id}
