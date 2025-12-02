@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult } from "../types";
 
@@ -33,7 +32,7 @@ const SYSTEM_INSTRUCTION = `
 }
 `;
 
-export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResult> => {
+export const analyzeDrawing = async (base64Image: string, modelId: string): Promise<AnalysisResult> => {
   // CRITICAL FIX FOR VERCEL/VITE:
   // We utilize import.meta.env.VITE_GOOGLE_API_KEY because Vite does not polyfill process.env in the browser.
   // We use 'as any' to bypass potential TS restrictions in some environments, ensuring the build passes.
@@ -99,16 +98,12 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
       }
     ]
   };
-
-  // STRATEGY: 
-  // 1. Try Primary Model (gemini-3-pro-preview)
-  // 2. If Quota Exceeded (429), switch to Fallback Model (gemini-2.5-pro)
   
   try {
-    console.log("Attempting analysis with PRIMARY model: gemini-3-pro-preview");
+    console.log(`Attempting analysis with selected model: ${modelId}`);
     
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: modelId,
       config: config,
       contents: requestContents
     });
@@ -117,29 +112,16 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
     return JSON.parse(response.text) as AnalysisResult;
 
   } catch (error: any) {
+    console.error("Analysis Error:", error);
+    
     // Check for Quota Exceeded (429) or Service Overloaded (503)
     const isQuotaError = error.message?.includes('429') || error.status === 429 || error.status === 503;
 
     if (isQuotaError) {
-      console.warn("Primary model (3-Pro) quota exceeded. Switching to FALLBACK model: gemini-2.5-pro");
-      
-      try {
-        const fallbackResponse = await ai.models.generateContent({
-          model: 'gemini-2.5-pro',
-          config: config, // Keep temperature 0
-          contents: requestContents
-        });
-
-        if (!fallbackResponse.text) throw new Error("No text response received from Fallback AI.");
-        return JSON.parse(fallbackResponse.text) as AnalysisResult;
-        
-      } catch (fallbackError: any) {
-        console.error("Fallback model also failed:", fallbackError);
-        throw new Error("Сервіс перевантажений (всі ліміти вичерпано). Будь ласка, спробуйте пізніше.");
-      }
+       throw new Error(`Ліміт запитів для моделі ${modelId} вичерпано. Будь ласка, спробуйте обрати іншу модель зі списку або зачекайте.`);
     }
 
-    // If it's not a quota error (e.g. invalid image, safety block), throw original error
+    // Pass through other errors
     throw error;
   }
 };

@@ -64,7 +64,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ status, result }) =>
              </svg>
         </div>
         
-        <h3 className="text-3xl font-bold mb-3" style={{ color: '#4B0082' }}>Штучний Інтелект думає...</h3>
+        <h3 className="text-3xl font-bold mb-3" style={{ color: '#4B0082' }}>Штучний Інтелект міркує...</h3>
         <p className="text-slate-600 text-xl max-w-md animate-pulse">
             Виконується глибокий аналіз графомоторних ознак, символіки та композиції малюнка.
         </p>

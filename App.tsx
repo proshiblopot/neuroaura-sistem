@@ -6,7 +6,7 @@ import { Disclaimer } from './components/Disclaimer';
 import { Modal } from './components/Modal';
 import { AnalysisStatus, ImageFile, AnalysisResult } from './types';
 import { analyzeDrawing } from './services/geminiService';
-import { Loader2, Info, ChevronDown } from 'lucide-react';
+import { Loader2, Info, ChevronDown, Cpu, Sparkles, Brain, Zap } from 'lucide-react';
 
 // Methodology descriptions content
 const METHODOLOGY_INFO = {
@@ -32,6 +32,13 @@ const METHODOLOGY_INFO = {
   }
 };
 
+const MODELS = [
+  { id: 'gemini-2.0-flash-thinking-exp-01-21', name: 'Gemini 2.0 Thinking', desc: 'Глибоке мислення', icon: <Brain className="w-4 h-4" /> },
+  { id: 'gemini-3-pro-preview', name: 'Gemini 3.0 Pro', desc: 'Найвищий інтелект', icon: <Sparkles className="w-4 h-4" /> },
+  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', desc: 'Стабільний Pro', icon: <Cpu className="w-4 h-4" /> },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', desc: 'Швидкий, іноді помиляється', icon: <Zap className="w-4 h-4" /> },
+];
+
 const App: React.FC = () => {
   const [status, setStatus] = useState<AnalysisStatus>(AnalysisStatus.IDLE);
   const [selectedImage, setSelectedImage] = useState<ImageFile | null>(null);
@@ -39,6 +46,9 @@ const App: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   
+  // Model Selection State
+  const [selectedModel, setSelectedModel] = useState<string>('gemini-2.0-flash-thinking-exp-01-21');
+
   // Modal State
   const [activeMethodology, setActiveMethodology] = useState<keyof typeof METHODOLOGY_INFO | null>(null);
 
@@ -60,7 +70,7 @@ const App: React.FC = () => {
     setIsInfoOpen(false);
 
     try {
-      const analysisData = await analyzeDrawing(selectedImage.base64);
+      const analysisData = await analyzeDrawing(selectedImage.base64, selectedModel);
       setResult(analysisData);
       setStatus(AnalysisStatus.SUCCESS);
     } catch (error: any) {
@@ -138,15 +148,8 @@ const App: React.FC = () => {
                 />
              </div>
 
-             {/* Error Message */}
-             {status === AnalysisStatus.ERROR && (
-                <div className="bg-red-50 text-red-700 p-5 rounded-xl text-lg border border-red-100 flex items-center gap-2 mb-4">
-                  <span>⚠️</span> {errorMsg}
-                </div>
-              )}
-
-             {/* Action Button */}
-             <div className="flex justify-center">
+             {/* Action Button - MOVED ABOVE MODELS */}
+             <div className="flex justify-center mb-6">
                 {status === AnalysisStatus.SUCCESS ? (
                    <button
                    onClick={handleReset}
@@ -177,6 +180,50 @@ const App: React.FC = () => {
                   </button>
                 )}
              </div>
+
+             {/* Model Selection - MOVED BELOW ACTION BUTTON */}
+             {status !== AnalysisStatus.SUCCESS && (
+               <div className="mb-6 bg-white rounded-xl p-5 border border-slate-100 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Cpu className="w-6 h-6 text-[#4B0082]" />
+                    <h3 className="font-bold text-slate-700 text-lg">Оберіть модель аналізу:</h3>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {MODELS.map((model) => (
+                      <button
+                        key={model.id}
+                        onClick={() => setSelectedModel(model.id)}
+                        className={`relative p-3 rounded-xl border-2 text-left transition-all duration-200 ${
+                          selectedModel === model.id
+                            ? 'border-[#4B0082] bg-[#F3F0FF] shadow-md transform scale-[1.02]'
+                            : 'border-slate-100 bg-white hover:border-[#4B0082]/30 hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 font-bold text-slate-800">
+                          <span className={selectedModel === model.id ? 'text-[#4B0082]' : 'text-slate-500'}>
+                            {model.icon}
+                          </span>
+                          {model.name}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-1 pl-6">{model.desc}</div>
+                        {selectedModel === model.id && (
+                          <div className="absolute top-3 right-3 w-3 h-3 bg-[#4B0082] rounded-full shadow-sm ring-2 ring-white"></div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+               </div>
+             )}
+
+             {/* Error Message */}
+             {status === AnalysisStatus.ERROR && (
+                <div className="bg-red-50 text-red-700 p-5 rounded-xl text-lg border border-red-100 flex flex-col gap-2 mb-4">
+                  <div className="flex items-center gap-2 font-bold">
+                     <span>⚠️</span> Помилка
+                  </div>
+                  <div>{errorMsg}</div>
+                </div>
+              )}
           </section>
 
           {/* Section 2: Results */}
