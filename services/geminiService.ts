@@ -33,9 +33,6 @@ const SYSTEM_INSTRUCTION = `
 }
 `;
 
-// Helper function to wait
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
 export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResult> => {
   // CRITICAL FIX FOR VERCEL/VITE:
   // We utilize import.meta.env.VITE_GOOGLE_API_KEY because Vite does not polyfill process.env in the browser.
@@ -65,7 +62,7 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
   }
 
   const config = {
-    temperature: 0, // Strict deterministic output
+    temperature: 0, // Strict deterministic output for diagnostics
     systemInstruction: SYSTEM_INSTRUCTION,
     responseMimeType: 'application/json',
     responseSchema: {
@@ -103,44 +100,46 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
     ]
   };
 
-  // RETRY LOGIC for 429 Errors
-  const MAX_RETRIES = 3;
-  let attempt = 0;
-
-  while (attempt < MAX_RETRIES) {
-    try {
-      console.log(`Attempting analysis with gemini-3-pro-preview (Attempt ${attempt + 1}/${MAX_RETRIES})`);
-      
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        config: config,
-        contents: requestContents
-      });
-
-      if (!response.text) throw new Error("No text response received from AI.");
-      return JSON.parse(response.text) as AnalysisResult;
-
-    } catch (error: any) {
-      console.warn(`Attempt ${attempt + 1} failed.`, error);
-
-      // If error is 429 (Too Many Requests) or 503 (Service Unavailable), we wait and retry
-      if (error.message?.includes('429') || error.status === 429 || error.status === 503) {
-        attempt++;
-        if (attempt < MAX_RETRIES) {
-          // Exponential backoff: 2s, 4s, 8s...
-          const waitTime = 2000 * Math.pow(2, attempt - 1);
-          console.log(`Quota limit hit. Retrying in ${waitTime}ms...`);
-          await delay(waitTime);
-          continue;
-        } else {
-          throw new Error("Сервери Google перевантажені (ліміт запитів). Будь ласка, зачекайте хвилину і спробуйте знову. (429 Quota Exceeded)");
-        }
-      }
-
-      // If it's a different error, throw immediately
-      throw error;
-    }
-  }
+  // STRATEGY: 
+  // 1. Try Primary Model (gemini-3-pro-preview)
+  // 2. If Quota Exceeded (429), switch to Fallback Model (gemini-2.5-pro)
   
-  throw new Error("Unknown error occurred during analysis.");
+  try {
+    console.log("Attempting analysis with PRIMARY model: gemini-3-pro-preview");
+    
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      config: config,
+      contents: requestContents
+    });
+
+    if (!response.text) throw new Error("No text response received from AI.");
+    return JSON.parse(response.text) as AnalysisResult;
+
+  } catch (error: any) {
+    // Check for Quota Exceeded (429) or Service Overloaded (503)
+    const isQuotaError = error.message?.includes('429') || error.status === 429 || error.status === 503;
+
+    if (isQuotaError) {
+      console.warn("Primary model (3-Pro) quota exceeded. Switching to FALLBACK model: gemini-2.5-pro");
+      
+      try {
+        const fallbackResponse = await ai.models.generateContent({
+          model: 'gemini-2.5-pro',
+          config: config, // Keep temperature 0
+          contents: requestContents
+        });
+
+        if (!fallbackResponse.text) throw new Error("No text response received from Fallback AI.");
+        return JSON.parse(fallbackResponse.text) as AnalysisResult;
+        
+      } catch (fallbackError: any) {
+        console.error("Fallback model also failed:", fallbackError);
+        throw new Error("Сервіс перевантажений (всі ліміти вичерпано). Будь ласка, спробуйте пізніше.");
+      }
+    }
+
+    // If it's not a quota error (e.g. invalid image, safety block), throw original error
+    throw error;
+  }
 };
