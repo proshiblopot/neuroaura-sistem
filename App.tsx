@@ -63,10 +63,10 @@ const App: React.FC = () => {
       const analysisData = await analyzeDrawing(selectedImage.base64);
       setResult(analysisData);
       setStatus(AnalysisStatus.SUCCESS);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       setStatus(AnalysisStatus.ERROR);
-      setErrorMsg("Не вдалося проаналізувати малюнок. Спробуйте ще раз.");
+      setErrorMsg(error.message || "Не вдалося проаналізувати малюнок. Спробуйте ще раз.");
     }
   };
 

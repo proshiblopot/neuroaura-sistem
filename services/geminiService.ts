@@ -36,11 +36,12 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
   // CRITICAL FIX FOR VERCEL/VITE:
   // We utilize import.meta.env.VITE_GOOGLE_API_KEY because Vite does not polyfill process.env in the browser.
   // We use 'as any' to bypass potential TS restrictions in some environments, ensuring the build passes.
+  // WARNING: Do not share code with API keys.
   const apiKey = (import.meta as any).env.VITE_GOOGLE_API_KEY;
 
   if (!apiKey) {
-    console.error("CRITICAL ERROR: API Key is missing. Make sure VITE_GOOGLE_API_KEY is set in Vercel Environment Variables.");
-    throw new Error("API Key is missing. Please configure VITE_GOOGLE_API_KEY.");
+     console.error("CRITICAL ERROR: API Key is missing. Make sure VITE_GOOGLE_API_KEY is set in Vercel Environment Variables.");
+     throw new Error("API Key is missing. Please configure VITE_GOOGLE_API_KEY.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -59,61 +60,84 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
     }
   }
 
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
-      config: {
-        temperature: 0,
-        systemInstruction: SYSTEM_INSTRUCTION,
-        responseMimeType: 'application/json',
-        responseSchema: {
+  // Define common configuration for both attempts
+  const commonConfig = {
+    temperature: 0, // Strict deterministic output for both models
+    systemInstruction: SYSTEM_INSTRUCTION,
+    responseMimeType: 'application/json',
+    responseSchema: {
+      type: Type.OBJECT,
+      properties: {
+        methodology: { type: Type.STRING },
+        graphic_analysis: { type: Type.STRING },
+        detailing: { type: Type.STRING },
+        psycho_features: { type: Type.STRING },
+        cognitive_level: {
           type: Type.OBJECT,
           properties: {
-            methodology: { type: Type.STRING },
-            graphic_analysis: { type: Type.STRING },
-            detailing: { type: Type.STRING },
-            psycho_features: { type: Type.STRING },
-            cognitive_level: {
-              type: Type.OBJECT,
-              properties: {
-                level: { type: Type.STRING },
-                reasoning: { type: Type.STRING },
-              },
-              required: ["level", "reasoning"],
-            },
-            recommendations: { type: Type.STRING },
+            level: { type: Type.STRING },
+            reasoning: { type: Type.STRING },
           },
-          required: ["methodology", "graphic_analysis", "detailing", "psycho_features", "cognitive_level", "recommendations"],
+          required: ["level", "reasoning"],
         },
+        recommendations: { type: Type.STRING },
       },
-      contents: {
-        parts: [
-          {
-            inlineData: {
-              mimeType: mimeType,
-              data: base64Data
-            }
-          },
-          {
-            text: "Проаналізуй малюнок дитини (6-10 років) і поверни результат виключно у форматі JSON згідно інструкції."
-          }
-        ]
+      required: ["methodology", "graphic_analysis", "detailing", "psycho_features", "cognitive_level", "recommendations"],
+    },
+  };
+
+  const requestContents = {
+    parts: [
+      {
+        inlineData: {
+          mimeType: mimeType,
+          data: base64Data
+        }
+      },
+      {
+        text: "Проаналізуй малюнок дитини (6-10 років) і поверни результат виключно у форматі JSON згідно інструкції."
       }
+    ]
+  };
+
+  try {
+    // ATTEMPT 1: Primary Model (Gemini 3 Pro Preview)
+    console.log("Attempting analysis with Primary Model: gemini-3-pro-preview");
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      config: commonConfig,
+      contents: requestContents
     });
 
-    if (response.text) {
-      try {
-        const jsonResponse = JSON.parse(response.text) as AnalysisResult;
-        return jsonResponse;
-      } catch (parseError) {
-        console.error("JSON Parse Error:", parseError);
-        throw new Error("Failed to parse AI response.");
-      }
-    } else {
-      throw new Error("No text response received from AI.");
+    if (!response.text) throw new Error("No text response received from AI (Primary).");
+    return JSON.parse(response.text) as AnalysisResult;
+
+  } catch (error: any) {
+    console.warn("Primary model failed.", error);
+
+    // Check for Quota Exceeded (429) or Service Unavailable (503)
+    // If it's a quota issue, we fallback to Flash.
+    if (error.message?.includes('429') || error.status === 429 || error.status === 503) {
+        console.log("Quota exceeded or service busy. Falling back to Secondary Model: gemini-2.5-flash");
+        
+        try {
+            // ATTEMPT 2: Fallback Model (Gemini 2.5 Flash)
+            const fallbackResponse = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                config: commonConfig, // Keep temperature 0 for consistency
+                contents: requestContents
+            });
+
+            if (!fallbackResponse.text) throw new Error("No text response received from AI (Fallback).");
+            return JSON.parse(fallbackResponse.text) as AnalysisResult;
+
+        } catch (fallbackError: any) {
+            console.error("Fallback model also failed:", fallbackError);
+            throw new Error("Сервіс тимчасово перевантажений (всі моделі зайняті). Будь ласка, спробуйте пізніше.");
+        }
     }
-  } catch (error) {
-    console.error("Gemini Analysis Error:", error);
+
+    // If it's another type of error (e.g. invalid key, parsing error), rethrow it.
     throw error;
   }
 };
