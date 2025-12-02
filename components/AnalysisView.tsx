@@ -62,7 +62,6 @@ ${result.recommendations}
                 <defs>
                     <linearGradient id="deepGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stopColor="#4B0082" />
-                        {/* Middle color removed for cleaner Indigo to Teal transition */}
                         <stop offset="100%" stopColor="#00CED1" />
                     </linearGradient>
                     <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
