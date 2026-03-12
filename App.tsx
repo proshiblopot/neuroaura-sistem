@@ -34,7 +34,7 @@ const METHODOLOGY_INFO = {
 };
 
 const MODELS = [
-  { id: 'gemini-3-pro-preview', name: 'Gemini 3.0 Pro', desc: 'Найвищий інтелект', icon: <Sparkles className="w-4 h-4" /> },
+  { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro', desc: 'Найвищий інтелект', icon: <Sparkles className="w-4 h-4" /> },
   { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', desc: 'Стабільний Pro', icon: <Cpu className="w-4 h-4" /> },
   { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', desc: 'Швидкий, але іноді помиляється', icon: <Zap className="w-4 h-4" /> },
 ];
@@ -47,7 +47,7 @@ const App: React.FC = () => {
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   
   // Model Selection State
-  const [selectedModel, setSelectedModel] = useState<string>('gemini-3-pro-preview');
+  const [selectedModel, setSelectedModel] = useState<string>('gemini-3.1-pro-preview');
 
   // Modal State
   const [activeMethodology, setActiveMethodology] = useState<keyof typeof METHODOLOGY_INFO | null>(null);
