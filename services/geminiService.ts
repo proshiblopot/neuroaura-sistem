@@ -138,7 +138,7 @@ export const analyzeDrawing = async (base64Image: string, modelId: string): Prom
     
     // Handle Quota Limits (429) specific to free/experimental models
     if (error.message?.includes('429') || error.status === 429 || error.message?.includes('Quota exceeded')) {
-       throw new Error(`Ліміт запитів для моделі ${modelId} вичерпано. Будь ласка, оберіть іншу модель (наприклад, Gemini 2.5 Flash) або спробуйте пізніше. Перевірити ліміти: https://aistudio.google.com/app/settings`);
+       throw new Error(`Ліміт запитів для моделі ${modelId} вичерпано. Будь ласка, оберіть іншу модель або спробуйте пізніше. Перевірити ліміти: https://aistudio.google.com/app/settings`);
     }
 
     throw new Error(`Помилка аналізу (${modelId}): ${error.message || "Спробуйте ще раз."}`);
