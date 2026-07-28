@@ -35,8 +35,8 @@ const METHODOLOGY_INFO = {
 
 const MODELS = [
   { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro', desc: 'Найвищий інтелект', icon: <Sparkles className="w-4 h-4" /> },
-  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', desc: 'Стабільний Pro', icon: <Cpu className="w-4 h-4" /> },
-  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', desc: 'Швидкий, але іноді помиляється', icon: <Zap className="w-4 h-4" /> },
+  { id: 'gemini-3.5-flash-thinking', name: 'Gemini 3.5 Flash (Thinking)', desc: 'Стабільний та глибокий аналіз', icon: <Cpu className="w-4 h-4" /> },
+  { id: 'gemini-3-flash-preview-thinking', name: 'Gemini 3.0 Flash (Thinking)', desc: 'Швидкий аналіз з мисленням', icon: <Zap className="w-4 h-4" /> },
 ];
 
 const App: React.FC = () => {
