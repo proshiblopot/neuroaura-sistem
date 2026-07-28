@@ -34,9 +34,9 @@ const METHODOLOGY_INFO = {
 };
 
 const MODELS = [
-  { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro', desc: 'Найвищий інтелект', icon: <Sparkles className="w-4 h-4" /> },
-  { id: 'gemini-3.5-flash-thinking', name: 'Gemini 3.5 Flash (Thinking)', desc: 'Стабільний та глибокий аналіз', icon: <Cpu className="w-4 h-4" /> },
-  { id: 'gemini-3-flash-preview-thinking', name: 'Gemini 3.0 Flash (Thinking)', desc: 'Швидкий аналіз з мисленням', icon: <Zap className="w-4 h-4" /> },
+  { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro', icon: <Sparkles className="w-4 h-4" /> },
+  { id: 'gemini-3.5-flash', name: 'Gemini 3.5 Flash', icon: <Cpu className="w-4 h-4" /> },
+  { id: 'gemini-3-flash-preview', name: 'Gemini 3.0 Flash', icon: <Zap className="w-4 h-4" /> },
 ];
 
 const App: React.FC = () => {
@@ -206,7 +206,6 @@ const App: React.FC = () => {
                           </span>
                           {model.name}
                         </div>
-                        <div className="text-xs text-slate-500 mt-1 pl-6">{model.desc}</div>
                         {selectedModel === model.id && (
                           <div className="absolute top-3 right-3 w-3 h-3 bg-[#4B0082] rounded-full shadow-sm ring-2 ring-white"></div>
                         )}
