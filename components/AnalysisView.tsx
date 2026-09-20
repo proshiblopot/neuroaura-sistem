@@ -38,7 +38,7 @@ ${result.cognitive_block?.structural_analysis || result.detailing || ''}
 
 БЛОК 2: ДОДАТКОВИЙ ПРОЄКТИВНИЙ БЛОК (ЕМОЦІЙНО-ОСОБИСТІСНІ ІНДИКАТОРИ)
 --------------------------------------------------
-1. Графомоторний та формальний аналіз:
+1. Графомоторний та формальний аналіз (візуальна інтенсивність ліній, характер контурів, композиція):
 ${result.projective_block?.graphomotor_analysis || result.graphic_analysis || ''}
 
 2. Емоційний стан, самооцінка та соціальна адаптація:
@@ -236,7 +236,7 @@ ${result.dss_note || "NeuroAura функціонує як алгоритмізо
             <div className="bg-slate-50 rounded-xl p-5 border border-slate-100">
               <div className="flex items-center gap-2 mb-2">
                 <PenTool className="w-5 h-5 text-slate-600" />
-                <h4 className="font-bold text-lg text-slate-800">1. Графомоторний та формальний аналіз (натиск, лінії, композиція)</h4>
+                <h4 className="font-bold text-lg text-slate-800">1. Графомоторний та формальний аналіз (візуальна інтенсивність ліній, контури, композиція)</h4>
               </div>
               <p className="text-slate-700 leading-relaxed text-base pl-7">
                 {projBlock?.graphomotor_analysis || result.graphic_analysis}
