@@ -228,7 +228,7 @@ export const analyzeDrawing = async (base64Image: string, modelId: string): Prom
       }
 
       if (errorStr.includes('503') || errorStr.includes('unavailable') || errorStr.includes('high demand')) {
-        throw new Error(`Модель ${modelId} тимчасово перевантажена серверами Google (503). Будь ласка, натисніть іншу модель у кнопках вибору вище (наприклад, Gemini 3.6 Flash або Gemini 3.0 Flash) або повторіть через кілька секунд.`);
+        throw new Error(`Модель ${modelId} тимчасово перевантажена серверами Google (503). Будь ласка, натисніть іншу модель у кнопках вибору вище (наприклад, Gemini 3.8 Flash або Gemini 3.5 Flash) або повторіть через кілька секунд.`);
       }
 
       if (errorStr.includes('429') || errorStr.includes('quota exceeded')) {
