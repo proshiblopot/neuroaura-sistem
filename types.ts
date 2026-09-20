@@ -23,6 +23,7 @@ export interface ProjectiveBlock {
 
 export interface AnalysisResult {
   methodology: string;
+  used_model?: string;
   cognitive_block: CognitiveBlock;
   projective_block: ProjectiveBlock;
   dss_note: string;

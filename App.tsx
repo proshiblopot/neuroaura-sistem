@@ -7,7 +7,7 @@ import { Disclaimer } from './components/Disclaimer';
 import { Modal } from './components/Modal';
 import { AnalysisStatus, ImageFile, AnalysisResult } from './types';
 import { analyzeDrawing } from './services/geminiService';
-import { Loader2, Info, ChevronDown, Cpu, Sparkles, Brain, Zap } from 'lucide-react';
+import { Loader2, Info, ChevronDown } from 'lucide-react';
 
 // Methodology descriptions content
 const METHODOLOGY_INFO = {
@@ -56,21 +56,12 @@ const METHODOLOGY_INFO = {
   }
 };
 
-const MODELS = [
-  { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash', icon: <Sparkles className="w-4 h-4" /> },
-  { id: 'gemini-3.5-flash', name: 'Gemini 3.5 Flash', icon: <Cpu className="w-4 h-4" /> },
-  { id: 'gemini-3-flash-preview', name: 'Gemini 3.0 Flash', icon: <Zap className="w-4 h-4" /> },
-];
-
 const App: React.FC = () => {
   const [status, setStatus] = useState<AnalysisStatus>(AnalysisStatus.IDLE);
   const [selectedImage, setSelectedImage] = useState<ImageFile | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
-  
-  // Model Selection State
-  const [selectedModel, setSelectedModel] = useState<string>('gemini-3.6-flash');
 
   // Modal State
   const [activeMethodology, setActiveMethodology] = useState<keyof typeof METHODOLOGY_INFO | null>(null);
@@ -93,7 +84,7 @@ const App: React.FC = () => {
     setIsInfoOpen(false);
 
     try {
-      const analysisData = await analyzeDrawing(selectedImage.base64, selectedModel);
+      const analysisData = await analyzeDrawing(selectedImage.base64);
       setResult(analysisData);
       setStatus(AnalysisStatus.SUCCESS);
     } catch (error: any) {
@@ -232,42 +223,8 @@ const App: React.FC = () => {
                       <>🔍 Розпочати Аналіз</>
                     )}
                   </button>
-                )}
+                 )}
              </div>
-
-             {/* Model Selection - MOVED BELOW ACTION BUTTON */}
-             {status !== AnalysisStatus.SUCCESS && (
-               <div className="mb-6 bg-white rounded-xl p-5 border border-slate-100 shadow-sm">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Cpu className="w-6 h-6 text-[#4B0082]" />
-                    <h3 className="font-bold text-slate-700 text-lg">Оберіть модель аналізу:</h3>
-                  </div>
-                  {/* Changed grid layout to 3 columns on sm+ screens for alignment */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {MODELS.map((model) => (
-                      <button
-                        key={model.id}
-                        onClick={() => setSelectedModel(model.id)}
-                        className={`relative p-3 rounded-xl border-2 text-left transition-all duration-200 ${
-                          selectedModel === model.id
-                            ? 'border-[#4B0082] bg-[#F3F0FF] shadow-md transform scale-[1.02]'
-                            : 'border-slate-100 bg-white hover:border-[#4B0082]/30 hover:bg-slate-50'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 font-bold text-slate-800">
-                          <span className={selectedModel === model.id ? 'text-[#4B0082]' : 'text-slate-500'}>
-                            {model.icon}
-                          </span>
-                          {model.name}
-                        </div>
-                        {selectedModel === model.id && (
-                          <div className="absolute top-3 right-3 w-3 h-3 bg-[#4B0082] rounded-full shadow-sm ring-2 ring-white"></div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-               </div>
-             )}
 
              {/* Error Message */}
              {status === AnalysisStatus.ERROR && (

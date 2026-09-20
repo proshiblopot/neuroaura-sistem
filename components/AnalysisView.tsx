@@ -1,6 +1,6 @@
 import React from 'react';
 import { AnalysisStatus, AnalysisResult } from '../types';
-import { BookOpen, PenTool, Lightbulb, GraduationCap, HeartHandshake, Download, Activity, FileText, CheckCircle2 } from 'lucide-react';
+import { BookOpen, PenTool, Lightbulb, GraduationCap, HeartHandshake, Download, Activity, FileText, CheckCircle2, Cpu } from 'lucide-react';
 
 interface AnalysisViewProps {
   status: AnalysisStatus;
@@ -22,6 +22,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ status, result }) =>
 NEUROAURA - ЗВІТ НЕЙРОПСИХОЛОГІЧНОГО АНАЛІЗУ
 Дата: ${date} о ${time}
 Методика / Об'єкти: ${result.methodology}
+Модель аналізу: ${result.used_model || 'Автоматичний вибір'}
 ==================================================
 
 БЛОК 1: ОСНОВНИЙ ДОСЛІДНИЦЬКИЙ БЛОК (КОГНІТИВНИЙ РОЗВИТОК)
@@ -138,14 +139,24 @@ ${result.dss_note || "NeuroAura функціонує як алгоритмізо
       <div className="space-y-6 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         
         {/* Методика / Заголовок висновку */}
-        <div className="bg-white rounded-xl p-6 border-l-4 shadow-sm" style={{ borderColor: '#4B0082' }}>
-          <div className="flex items-center gap-3 mb-2">
-            <BookOpen className="w-7 h-7" style={{ color: '#4B0082' }} />
-            <h3 className="font-bold text-xl" style={{ color: '#4B0082' }}>КРОК 1: ІДЕНТИФІКОВАНА МЕТОДИКА ТА ОБ'ЄКТИ</h3>
+        <div className="bg-white rounded-xl p-6 border-l-4 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" style={{ borderColor: '#4B0082' }}>
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <BookOpen className="w-7 h-7" style={{ color: '#4B0082' }} />
+              <h3 className="font-bold text-xl" style={{ color: '#4B0082' }}>КРОК 1: ІДЕНТИФІКОВАНА МЕТОДИКА ТА ОБ'ЄКТИ</h3>
+            </div>
+            <p className="text-slate-800 text-lg font-medium pl-10">
+              {result.methodology}
+            </p>
           </div>
-          <p className="text-slate-800 text-lg font-medium pl-10">
-            {result.methodology}
-          </p>
+          {result.used_model && (
+            <div className="sm:self-center flex-shrink-0 pl-10 sm:pl-0">
+              <div className="inline-flex items-center gap-2 bg-[#F3F0FF] text-[#4B0082] px-3.5 py-1.5 rounded-full border border-[#4B0082]/20 text-sm font-semibold shadow-xs">
+                <Cpu className="w-4 h-4 text-[#4B0082]" />
+                <span>Модель: {result.used_model}</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* БЛОК 1: ОСНОВНИЙ ДОСЛІДНИЦЬКИЙ БЛОК (КОГНІТИВНИЙ РОЗВИТОК) */}

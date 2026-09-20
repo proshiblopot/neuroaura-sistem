@@ -89,7 +89,16 @@ const SYSTEM_INSTRUCTION = `
 "NeuroAura функціонує як алгоритмізована система підтримки психодіагностичного рішення (DSS). Цей автоматизований висновок має виключно індикативний характер, не є самодостатнім клінічним діагнозом і повинен використовуватися психологом у комплексі з іншою інформацією про дитину."
 `;
 
-export const analyzeDrawing = async (base64Image: string, modelId: string): Promise<AnalysisResult> => {
+// Priority cascade: try 3.8 -> 3.7 -> 3.6 -> 3.5 -> 3.0
+const MODEL_CASCADE = [
+  { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash' },
+  { id: 'gemini-3.7-flash', label: 'Gemini 3.7 Flash' },
+  { id: 'gemini-3.6-flash', label: 'Gemini 3.6 Flash' },
+  { id: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash' },
+  { id: 'gemini-3-flash-preview', label: 'Gemini 3.0 Flash' },
+];
+
+export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResult> => {
   // CRITICAL FIX FOR VERCEL/VITE:
   // We utilize import.meta.env.VITE_GOOGLE_API_KEY because Vite does not polyfill process.env in the browser.
   // We use 'as any' to bypass potential TS restrictions in some environments, ensuring the build passes.
@@ -102,14 +111,16 @@ export const analyzeDrawing = async (base64Image: string, modelId: string): Prom
   }
 
   const ai = new GoogleGenAI({ apiKey });
+  const errorsCollected: string[] = [];
 
-  // Attempt up to 3 times for transient 503/UNAVAILABLE errors with the selected model
-  let attempts = 0;
-  const maxAttempts = 3;
+  // Cascading execution through available models
+  for (const modelConfig of MODEL_CASCADE) {
+    const modelId = modelConfig.id;
+    const modelLabel = modelConfig.label;
 
-  while (attempts < maxAttempts) {
+    console.log(`[NeuroAura] Спроба аналізу з моделлю ${modelLabel} (${modelId})...`);
+
     try {
-      attempts++;
       const response = await ai.models.generateContent({
         model: modelId,
         contents: {
@@ -190,16 +201,17 @@ export const analyzeDrawing = async (base64Image: string, modelId: string): Prom
       });
 
       const text = response.text;
-      if (!text) throw new Error("Empty response");
+      if (!text) throw new Error("Empty response from model");
       
       const parsed = JSON.parse(text);
 
       const isScenarioA = parsed.cognitive_block?.score !== undefined && parsed.cognitive_block?.score >= 0;
       const scoreStr = isScenarioA ? ` (${parsed.cognitive_block.score}/9 балів)` : ' (Якісна оцінка)';
 
-      // Provide complete object with backward-compatibility fields
+      // SUCCESS! Return analysis with used_model identified
       return {
         methodology: parsed.methodology || "Клінічний аналіз малюнка",
+        used_model: modelLabel,
         cognitive_block: parsed.cognitive_block,
         projective_block: parsed.projective_block,
         dss_note: parsed.dss_note || "NeuroAura функціонує як алгоритмізована система підтримки психодіагностичного рішення (DSS). Цей автоматизований висновок має виключно індикативний характер, не є самодостатнім клінічним діагнозом і повинен використовуватися психологом у комплексі з іншою інформацією про дитину.",
@@ -214,36 +226,14 @@ export const analyzeDrawing = async (base64Image: string, modelId: string): Prom
       } as AnalysisResult;
 
     } catch (error: any) {
-      console.warn(`Model ${modelId} attempt ${attempts} error:`, error);
-      const errorStr = (error?.message || JSON.stringify(error) || '').toLowerCase();
-      const isTransient = errorStr.includes('503') || 
-                          errorStr.includes('unavailable') || 
-                          errorStr.includes('high demand') || 
-                          errorStr.includes('overloaded');
-
-      if (isTransient && attempts < maxAttempts) {
-        // Exponential backoff: 2s on 1st retry, 3.5s on 2nd retry
-        const delay = attempts * 1800;
-        await new Promise(res => setTimeout(res, delay));
-        continue;
-      }
-
-      if (errorStr.includes('503') || errorStr.includes('unavailable') || errorStr.includes('high demand')) {
-        throw new Error(`Модель ${modelId} тимчасово перевантажена серверами Google (503 Service Unavailable). Сервери Google відчувають пікове навантаження. Будь ласка, спробуйте ще раз або оберіть іншу модель у кнопках вибору вище.`);
-      }
-
-      if (errorStr.includes('429') || errorStr.includes('quota exceeded') || errorStr.includes('resource_exhausted')) {
-        throw new Error(`Вичерпано ліміт запитів для моделі ${modelId} (429 Quota Exceeded). Будь ласка, оберіть іншу модель або зачекайте хвилинку.`);
-      }
-
-      if (errorStr.includes('404') || errorStr.includes('not found')) {
-        throw new Error(`Модель ${modelId} не знайдена в реєстрі API (404). Будь ласка, оберіть іншу модель.`);
-      }
-
-      throw new Error(`Помилка аналізу (${modelId}): ${error?.message || "Спробуйте ще раз."}`);
+      console.warn(`[NeuroAura] Модель ${modelLabel} не відповіла або перевантажена:`, error?.message || error);
+      errorsCollected.push(`${modelLabel}: ${error?.message || 'Помилка'}`);
+      // Fallback automatically to the next model in cascade
+      continue;
     }
   }
 
-  throw new Error(`Помилка аналізу (${modelId}). Будь ласка, спробуйте ще раз.`);
+  // If all models in cascade failed
+  throw new Error(`Всі моделі аналізу (3.8, 3.7, 3.6, 3.5, 3.0) наразі перевантажені серверами Google або недоступні. Будь ласка, зачекайте 1-2 хвилини і повторіть спробу.`);
 };
 
