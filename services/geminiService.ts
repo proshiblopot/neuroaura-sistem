@@ -103,9 +103,9 @@ export const analyzeDrawing = async (base64Image: string, modelId: string): Prom
 
   const ai = new GoogleGenAI({ apiKey });
 
-  // Attempt up to 2 times for transient 503/UNAVAILABLE errors with the selected model
+  // Attempt up to 3 times for transient 503/UNAVAILABLE errors with the selected model
   let attempts = 0;
-  const maxAttempts = 2;
+  const maxAttempts = 3;
 
   while (attempts < maxAttempts) {
     try {
@@ -222,17 +222,22 @@ export const analyzeDrawing = async (base64Image: string, modelId: string): Prom
                           errorStr.includes('overloaded');
 
       if (isTransient && attempts < maxAttempts) {
-        // Wait 1.5 seconds and retry with the exact same selected model
-        await new Promise(res => setTimeout(res, 1500));
+        // Exponential backoff: 2s on 1st retry, 3.5s on 2nd retry
+        const delay = attempts * 1800;
+        await new Promise(res => setTimeout(res, delay));
         continue;
       }
 
       if (errorStr.includes('503') || errorStr.includes('unavailable') || errorStr.includes('high demand')) {
-        throw new Error(`Модель ${modelId} тимчасово перевантажена серверами Google (503). Будь ласка, оберіть іншу модель у кнопках вибору вище або повторіть через кілька секунд.`);
+        throw new Error(`Модель ${modelId} тимчасово перевантажена серверами Google (503 Service Unavailable). Сервери Google відчувають пікове навантаження. Будь ласка, спробуйте ще раз або оберіть іншу модель у кнопках вибору вище.`);
       }
 
-      if (errorStr.includes('429') || errorStr.includes('quota exceeded')) {
-        throw new Error(`Вичерпано ліміт запитів для моделі ${modelId}. Будь ласка, оберіть іншу модель або зачекайте хвилинку.`);
+      if (errorStr.includes('429') || errorStr.includes('quota exceeded') || errorStr.includes('resource_exhausted')) {
+        throw new Error(`Вичерпано ліміт запитів для моделі ${modelId} (429 Quota Exceeded). Будь ласка, оберіть іншу модель або зачекайте хвилинку.`);
+      }
+
+      if (errorStr.includes('404') || errorStr.includes('not found')) {
+        throw new Error(`Модель ${modelId} не знайдена в реєстрі API (404). Будь ласка, оберіть іншу модель.`);
       }
 
       throw new Error(`Помилка аналізу (${modelId}): ${error?.message || "Спробуйте ще раз."}`);
