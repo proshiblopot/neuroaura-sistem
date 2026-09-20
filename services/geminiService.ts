@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
 import { AnalysisResult } from "../types";
 
 const SYSTEM_INSTRUCTION = `
@@ -132,6 +132,9 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
         config: {
           systemInstruction: SYSTEM_INSTRUCTION,
           temperature: 0, // STRICTLY ZERO FOR DETERMINISTIC CLINICAL ANALYSIS
+          thinkingConfig: {
+            thinkingLevel: ThinkingLevel.HIGH, // MAXIMIZES CLINICAL DEEP REASONING
+          },
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
