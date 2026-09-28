@@ -89,19 +89,19 @@ const SYSTEM_INSTRUCTION = `
 "NeuroAura функціонує як алгоритмізована система підтримки психодіагностичного рішення (DSS). Цей автоматизований висновок має виключно індикативний характер, не є самодостатнім клінічним діагнозом і повинен використовуватися психологом у комплексі з іншою інформацією про дитину."
 `;
 
-// НАУКОВИЙ ЕКСПЕРИМЕНТ: Суворо єдина фіксована модель Gemini 3.0 Flash для 100% відтворюваності результатів
-// Використовуємо модель 3.0 Flash з активним глибоким мисленням та temperature: 0
+// НАУКОВИЙ ЕКСПЕРИМЕНТ: Суворо єдина фіксована модель Gemini 3.7 Flash для 100% відтворюваності результатів
+// Використовуємо модель 3.7 Flash з активним глибоким мисленням та temperature: 0
 const SINGLE_STABLE_MODEL = {
-  id: 'gemini-3-flash-preview',
-  label: 'Gemini 3.0 Flash'
+  id: 'gemini-3.7-flash',
+  label: 'Gemini 3.7 Flash'
 };
 
 /*
 // [Тимчасово закоментовано для чистоти експерименту]
 const BACKUP_CASCADE = [
+  { id: 'gemini-3.7-flash', label: 'Gemini 3.7 Flash' },
   { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash' },
   { id: 'gemini-3-flash-preview', label: 'Gemini 3.0 Flash' },
-  { id: 'gemini-flash-latest', label: 'Gemini Flash' },
 ];
 */
 
