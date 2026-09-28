@@ -89,16 +89,21 @@ const SYSTEM_INSTRUCTION = `
 "NeuroAura функціонує як алгоритмізована система підтримки психодіагностичного рішення (DSS). Цей автоматизований висновок має виключно індикативний характер, не є самодостатнім клінічним діагнозом і повинен використовуватися психологом у комплексі з іншою інформацією про дитину."
 `;
 
-// Priority cascade: try 3.8 -> 3.7 -> 3.6 -> 3.5 -> 3.0
-// [Тимчасово]: Для максимальної відтворюваності результатів активна лише модель Gemini 3.0 Flash.
-// Інші моделі каскаду закоментовані, щоб їх можна було швидко відновити за потреби.
-const MODEL_CASCADE = [
-  // { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash' },
-  // { id: 'gemini-3.7-flash', label: 'Gemini 3.7 Flash' },
-  // { id: 'gemini-3.6-flash', label: 'Gemini 3.6 Flash' },
-  // { id: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash' },
+// НАУКОВИЙ ЕКСПЕРИМЕНТ: Суворо єдина фіксована модель Gemini 3.0 Flash для 100% відтворюваності результатів
+// Використовуємо модель 3.0 Flash з активним глибоким мисленням та temperature: 0
+const SINGLE_STABLE_MODEL = {
+  id: 'gemini-3-flash-preview',
+  label: 'Gemini 3.0 Flash'
+};
+
+/*
+// [Тимчасово закоментовано для чистоти експерименту]
+const BACKUP_CASCADE = [
+  { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash' },
   { id: 'gemini-3-flash-preview', label: 'Gemini 3.0 Flash' },
+  { id: 'gemini-flash-latest', label: 'Gemini Flash' },
 ];
+*/
 
 export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResult> => {
   // CRITICAL FIX FOR VERCEL/VITE:
@@ -113,132 +118,124 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
   }
 
   const ai = new GoogleGenAI({ apiKey });
-  const errorsCollected: string[] = [];
+  const modelId = SINGLE_STABLE_MODEL.id;
+  const modelLabel = SINGLE_STABLE_MODEL.label;
 
-  // Cascading execution through available models
-  for (const modelConfig of MODEL_CASCADE) {
-    const modelId = modelConfig.id;
-    const modelLabel = modelConfig.label;
+  console.log(`[NeuroAura] Запуск наукового стандартизованого аналізу на фіксованій моделі ${modelLabel} (${modelId})...`);
 
-    console.log(`[NeuroAura] Спроба аналізу з моделлю ${modelLabel} (${modelId})...`);
-
-    try {
-      const response = await ai.models.generateContent({
-        model: modelId,
-        contents: {
-          parts: [
-            { inlineData: { mimeType: "image/jpeg", data: base64Image.split(',')[1] } },
-            { text: "Проведи покроковий автоматизований аналіз цього малюнка дитини (6-10 років) згідно з затвердженим протоколом. Дотримуйся правил стилістики (формулювання ймовірності, індикативний характер), визнач методику (Сценарій А або Сценарій Б) та сформуй висновок у вигляді двох окремих блоків: БЛОК 1 (Когнітивний розвиток) та БЛОК 2 (Емоційно-особистісні індикатори)." }
-          ]
+  const modelConfigPayload: any = {
+    systemInstruction: SYSTEM_INSTRUCTION,
+    temperature: 0, // СУВОРО 0 ДЛЯ НАУКОВОЇ ДЕТЕРМІНОВАНОСТІ ТА ВІДТВОРЮВАНОСТІ
+    thinkingConfig: {
+      thinkingLevel: ThinkingLevel.HIGH, // ГЛИБОКЕ АНАЛІТИЧНЕ МИСЛЕННЯ (CHAIN-OF-THOUGHT)
+    },
+    responseMimeType: "application/json",
+    responseSchema: {
+      type: Type.OBJECT,
+      properties: {
+        methodology: { 
+          type: Type.STRING, 
+          description: "Визначена методика: наприклад, 'Методика HTP (Будинок-Дерево-Людина) — Сценарій А' або 'Методика «Неіснуюча тварина» (М. З. Дукаревич) — Сценарій Б'" 
         },
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
-          temperature: 0, // STRICTLY ZERO FOR DETERMINISTIC CLINICAL ANALYSIS
-          thinkingConfig: {
-            thinkingLevel: ThinkingLevel.HIGH, // MAXIMIZES CLINICAL DEEP REASONING
-          },
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              methodology: { 
-                type: Type.STRING, 
-                description: "Визначена методика: наприклад, 'Методика HTP (Будинок-Дерево-Людина) — Сценарій А' або 'Методика «Неіснуюча тварина» (М. З. Дукаревич) — Сценарій Б'" 
-              },
-              cognitive_block: {
-                type: Type.OBJECT,
-                description: "БЛОК 1: Основний дослідницький блок (Когнітивний розвиток). Опиши структурну складність, диференційованість деталей та оригінальність. Якщо Сценарій А — сума балів (0-9) та рівень. Якщо Сценарій Б — якісна оцінка без балів. Жодних емоцій.",
-                properties: {
-                  scenario: {
-                    type: Type.STRING,
-                    description: "Ідентифікований сценарій: 'СЦЕНАРІЙ А' або 'СЦЕНАРІЙ Б'"
-                  },
-                  score: { 
-                    type: Type.INTEGER, 
-                    description: "Для Сценарію А: підсумкова сума балів від 0 до 9 за 9 критеріями Гудінаф-Гарріса. Для Сценарію Б: бали не застосовуються, вкажи -1." 
-                  },
-                  level: { 
-                    type: Type.STRING, 
-                    description: "Рівень когнітивного розвитку: для Сценарію А — 'Низький рівень', 'Середній рівень (норма)' або 'Високий рівень'; для Сценарію Б — якісний опис (напр. 'Середній/Високий рівень (якісна оцінка)')." 
-                  },
-                  criteria_breakdown: { 
-                    type: Type.STRING, 
-                    description: "Для Сценарію А: попунктна бінарна оцінка 9 критеріїв Гудінаф-Гарріса [1]-[9]. Для Сценарію Б: коментар про якісну оцінку без балів (фігура людини відсутня)." 
-                  },
-                  structural_analysis: { 
-                    type: Type.STRING, 
-                    description: "Опис структурної складності, диференційованості деталей та оригінальності образу. Жодних емоцій." 
-                  }
-                },
-                required: ["scenario", "score", "level", "criteria_breakdown", "structural_analysis"]
-              },
-              projective_block: {
-                type: Type.OBJECT,
-                description: "БЛОК 2: Додатковий проєктивний блок (Емоційно-особистісні індикатори). Рівень напруги, самооцінка, страхи, можлива агресія та соціальна адаптація на основі формального аналізу та відповідного сценарію.",
-                properties: {
-                  graphomotor_analysis: { 
-                    type: Type.STRING, 
-                    description: "1. Графомоторний та формальний аналіз: візуальна інтенсивність ліній (оптичний параметр контрастності зображення/скану, без згадок про фізичний натиск), характер ліній (ескізність, суцільність, нерівномірність), просторова організація на аркуші (розмір, зсув, композиція)" 
-                  },
-                  emotional_state: { 
-                    type: Type.STRING, 
-                    description: "2. Емоційно-особистісні індикатори: психоемоційний стан, рівень напруги, самооцінка, захисні тенденції та соціальна адаптація" 
-                  },
-                  projective_details: { 
-                    type: Type.STRING, 
-                    description: "3. Специфічні проєктивні індикатори відповідного сценарію (Будинок, Дерево, Людина для Сценарію А; або Тип побудови, Голова, Опори, Захист, Хвіст для Сценарію Б)" 
-                  },
-                  recommendations: { 
-                    type: Type.STRING, 
-                    description: "Комплексні орієнтовні рекомендації для психолога та батьків з формулюваннями ймовірності" 
-                  }
-                },
-                required: ["graphomotor_analysis", "emotional_state", "projective_details", "recommendations"]
-              },
-              dss_note: { 
-                type: Type.STRING, 
-                description: "Примітка: 'NeuroAura функціонує як алгоритмізована система підтримки психодіагностичного рішення (DSS). Цей автоматизований висновок має виключно індикативний характер, не є самодостатнім клінічним діагнозом і повинен використовуватися психологом у комплексі з іншою інформацією про дитину.'" 
-              }
+        cognitive_block: {
+          type: Type.OBJECT,
+          description: "БЛОК 1: Основний дослідницький блок (Когнітивний розвиток). Опиши структурну складність, диференційованість деталей та оригінальність. Якщо Сценарій А — сума балів (0-9) та рівень. Якщо Сценарій Б — якісна оцінка без балів. Жодних емоцій.",
+          properties: {
+            scenario: {
+              type: Type.STRING,
+              description: "Ідентифікований сценарій: 'СЦЕНАРІЙ А' або 'СЦЕНАРІЙ Б'"
             },
-            required: ["methodology", "cognitive_block", "projective_block", "dss_note"],
-          }
-        }
-      });
-
-      const text = response.text;
-      if (!text) throw new Error("Empty response from model");
-      
-      const parsed = JSON.parse(text);
-
-      const isScenarioA = parsed.cognitive_block?.score !== undefined && parsed.cognitive_block?.score >= 0;
-      const scoreStr = isScenarioA ? ` (${parsed.cognitive_block.score}/9 балів)` : ' (Якісна оцінка)';
-
-      // SUCCESS! Return analysis with used_model identified
-      return {
-        methodology: parsed.methodology || "Клінічний аналіз малюнка",
-        used_model: modelLabel,
-        cognitive_block: parsed.cognitive_block,
-        projective_block: parsed.projective_block,
-        dss_note: parsed.dss_note || "NeuroAura функціонує як алгоритмізована система підтримки психодіагностичного рішення (DSS). Цей автоматизований висновок має виключно індикативний характер, не є самодостатнім клінічним діагнозом і повинен використовуватися психологом у комплексі з іншою інформацією про дитину.",
-        graphic_analysis: parsed.projective_block?.graphomotor_analysis || "",
-        detailing: parsed.cognitive_block?.structural_analysis || "",
-        psycho_features: parsed.projective_block?.emotional_state || "",
-        cognitive_level: {
-          level: `${parsed.cognitive_block?.level || ''}${scoreStr}`,
-          reasoning: `${parsed.cognitive_block?.criteria_breakdown || ''}\n\n${parsed.cognitive_block?.structural_analysis || ''}`
+            score: { 
+              type: Type.INTEGER, 
+              description: "Для Сценарію А: підсумкова сума балів від 0 до 9 за 9 критеріями Гудінаф-Гарріса. Для Сценарію Б: бали не застосовуються, вкажи -1." 
+            },
+            level: { 
+              type: Type.STRING, 
+              description: "Рівень когнітивного розвитку: для Сценарію А — 'Низький рівень', 'Середній рівень (норма)' або 'Високий рівень'; для Сценарію Б — якісний опис (напр. 'Середній/Високий рівень (якісна оцінка)')." 
+            },
+            criteria_breakdown: { 
+              type: Type.STRING, 
+              description: "Для Сценарію А: попунктна бінарна оцінка 9 критеріїв Гудінаф-Гарріса [1]-[9]. Для Сценарію Б: коментар про якісну оцінку без балів (фігура людини відсутня)." 
+            },
+            structural_analysis: { 
+              type: Type.STRING, 
+              description: "Опис структурної складності, диференційованості деталей та оригінальності образу. Жодних емоцій." 
+            }
+          },
+          required: ["scenario", "score", "level", "criteria_breakdown", "structural_analysis"]
         },
-        recommendations: parsed.projective_block?.recommendations || ""
-      } as AnalysisResult;
-
-    } catch (error: any) {
-      console.warn(`[NeuroAura] Модель ${modelLabel} не відповіла або перевантажена:`, error?.message || error);
-      errorsCollected.push(`${modelLabel}: ${error?.message || 'Помилка'}`);
-      // Fallback automatically to the next model in cascade
-      continue;
+        projective_block: {
+          type: Type.OBJECT,
+          description: "БЛОК 2: Додатковий проєктивний блок (Емоційно-особистісні індикатори). Рівень напруги, самооцінка, страхи, можлива агресія та соціальна адаптація на основі формального аналізу та відповідного сценарію.",
+          properties: {
+            graphomotor_analysis: { 
+              type: Type.STRING, 
+              description: "1. Графомоторний та формальний аналіз: візуальна інтенсивність ліній (оптичний параметр контрастності зображення/скану, без згадок про фізичний натиск), характер ліній (ескізність, суцільність, нерівномірність), просторова організація на аркуші (розмір, зсув, композиція)" 
+            },
+            emotional_state: { 
+              type: Type.STRING, 
+              description: "2. Емоційно-особистісні індикатори: психоемоційний стан, рівень напруги, самооцінка, захисні тенденції та соціальна адаптація" 
+            },
+            projective_details: { 
+              type: Type.STRING, 
+              description: "3. Специфічні проєктивні індикатори відповідного сценарію (Будинок, Дерево, Людина для Сценарію А; або Тип побудови, Голова, Опори, Захист, Хвіст для Сценарію Б)" 
+            },
+            recommendations: { 
+              type: Type.STRING, 
+              description: "Комплексні орієнтовні рекомендації для психолога та батьків з формулюваннями ймовірності" 
+            }
+          },
+          required: ["graphomotor_analysis", "emotional_state", "projective_details", "recommendations"]
+        },
+        dss_note: { 
+          type: Type.STRING, 
+          description: "Примітка: 'NeuroAura функціонує як алгоритмізована система підтримки психодіагностичного рішення (DSS). Цей автоматизований висновок має виключно індикативний характер, не є самодостатнім клінічним діагнозом і повинен використовуватися психологом у комплексі з іншою інформацією про дитину.'" 
+        }
+      },
+      required: ["methodology", "cognitive_block", "projective_block", "dss_note"],
     }
-  }
+  };
 
-  // If all models in cascade failed
-  throw new Error(`Всі моделі аналізу (3.8, 3.7, 3.6, 3.5, 3.0) наразі перевантажені серверами Google або недоступні. Будь ласка, зачекайте 1-2 хвилини і повторіть спробу.`);
+  try {
+    const response = await ai.models.generateContent({
+      model: modelId,
+      contents: {
+        parts: [
+          { inlineData: { mimeType: "image/jpeg", data: base64Image.split(',')[1] } },
+          { text: "Проведи покроковий автоматизований аналіз цього малюнка дитини (6-10 років) згідно з затвердженим протоколом. Дотримуйся правил стилістики (формулювання ймовірності, індикативний характер), визнач методику (Сценарій А або Сценарій Б) та сформуй висновок у вигляді двох окремих блоків: БЛОК 1 (Когнітивний розвиток) та БЛОК 2 (Емоційно-особистісні індикатори)." }
+        ]
+      },
+      config: modelConfigPayload
+    });
+
+    const text = response.text;
+    if (!text) throw new Error("Порожня відповідь від моделі");
+    
+    const parsed = JSON.parse(text);
+
+    const isScenarioA = parsed.cognitive_block?.score !== undefined && parsed.cognitive_block?.score >= 0;
+    const scoreStr = isScenarioA ? ` (${parsed.cognitive_block.score}/9 балів)` : ' (Якісна оцінка)';
+
+    // УСПІХ! Повертаємо стандартизований результат аналізу
+    return {
+      methodology: parsed.methodology || "Клінічний аналіз малюнка",
+      used_model: modelLabel,
+      cognitive_block: parsed.cognitive_block,
+      projective_block: parsed.projective_block,
+      dss_note: parsed.dss_note || "NeuroAura функціонує як алгоритмізована система підтримки психодіагностичного рішення (DSS). Цей автоматизований висновок має виключно індикативний характер, не є самодостатнім клінічним діагнозом і повинен використовуватися психологом у комплексі з іншою інформацією про дитину.",
+      graphic_analysis: parsed.projective_block?.graphomotor_analysis || "",
+      detailing: parsed.cognitive_block?.structural_analysis || "",
+      psycho_features: parsed.projective_block?.emotional_state || "",
+      cognitive_level: {
+        level: `${parsed.cognitive_block?.level || ''}${scoreStr}`,
+        reasoning: `${parsed.cognitive_block?.criteria_breakdown || ''}\n\n${parsed.cognitive_block?.structural_analysis || ''}`
+      },
+      recommendations: parsed.projective_block?.recommendations || ""
+    } as AnalysisResult;
+
+  } catch (error: any) {
+    console.error(`[NeuroAura] Помилка виконання на моделі ${modelLabel}:`, error);
+    throw new Error(`Помилка аналізу на моделі ${modelLabel}: ${error?.message || 'Сервіс тимчасово недоступний'}. Будь ласка, спробуйте ще раз за хвилину.`);
+  }
 };
 
