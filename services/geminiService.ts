@@ -90,11 +90,13 @@ const SYSTEM_INSTRUCTION = `
 `;
 
 // Priority cascade: try 3.8 -> 3.7 -> 3.6 -> 3.5 -> 3.0
+// [Тимчасово]: Для максимальної відтворюваності результатів активна лише модель Gemini 3.0 Flash.
+// Інші моделі каскаду закоментовані, щоб їх можна було швидко відновити за потреби.
 const MODEL_CASCADE = [
-  { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash' },
-  { id: 'gemini-3.7-flash', label: 'Gemini 3.7 Flash' },
-  { id: 'gemini-3.6-flash', label: 'Gemini 3.6 Flash' },
-  { id: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash' },
+  // { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash' },
+  // { id: 'gemini-3.7-flash', label: 'Gemini 3.7 Flash' },
+  // { id: 'gemini-3.6-flash', label: 'Gemini 3.6 Flash' },
+  // { id: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash' },
   { id: 'gemini-3-flash-preview', label: 'Gemini 3.0 Flash' },
 ];
 
