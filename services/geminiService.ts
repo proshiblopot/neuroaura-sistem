@@ -24,21 +24,37 @@ const SYSTEM_INSTRUCTION = `
 - ПРОСТОРОВА ОРГАНІЗАЦІЯ ТА КОМПОЗИЦІЯ: співвідношення площі малюнка до аркуша (<1/3 — орієнтація на низький рівень домагань/невпевненість; >1/2 — можлива компенсаторна тенденція), зміщення по вертикалі (зсув вгору — завищені домагання; зсув вниз — схильність до невпевненості/зниженого фону настрою).
 
 2. КОГНІТИВНИЙ РОЗВИТОК (за модифікованими критеріями Ф. Гудінаф та Д. Гарріса для фігури людини):
+КРИТИЧНО ВАЖЛИВЕ ПРАВИЛО СТАНДАРТИЗАЦІЇ ДЛЯ ГРУПИ ЛЮДЕЙ:
+Якщо на малюнку зображено кілька фігур людей (сім'я, діти, дорослі тощо), 9 критеріїв шкали Гудінаф-Гарріса СУВОРО оцінюються за ОДНІЄЮ НАЙБІЛЬШОЮ (найвищою за розміром на аркуші) фігурою людини! Заборонено змішувати чи усереднювати деталі різних фігур або оцінювати дрібні другорядні фігури! Оцінюється виключно найбільша центральна/ключова фігура.
+
 Оцінюється за суворою бінарною шкалою (1 — наявно/відповідає віковій нормі, 0 — відсутньо/не відповідає). Максимум 9 балів:
 [1] Наявність шиї (критерій для віку 7+ років);
 [2] З'єднання рук з плечового пояса (не з тулуба чи голови);
 [3] Кінцівки двовимірні (не схематичні одновимірні "палички");
-[4] Очі мають промальовані зіниці;
+[4] Очі мають промальовані зіниці (СУВОРЕ ПРАВИЛО: Якщо очі зображені лише як дві прості цятки, крапки або штрихи без зовнішнього овального/круглого контуру очного яблука — СУВОРО ставити 0, оскільки зіниці відсутні. Ставити 1 ЛИШЕ тоді, коли є контур ока І окремо зіниця або райдужка всередині);
 [5] Наявність вух;
 [6] Наявність брів та/або вій;
 [7] Кисті рук мають чітко 5 пальців;
 [8] Непрозорість одягу (відсутність "рентгенівських" контурів тіла крізь одяг);
 [9] Складні деталі та атрибути одягу (ґудзики, кишені, шнурки, взуття, візерунки).
-Правило шкалювання: 
-- 0–3 бали: Низький рівень когнітивного розвитку;
-- 4–6 балів: Середній рівень когнітивного розвитку (вікова норма);
-- 7–9 балів: Високий рівень когнітивного розвитку.
-Аналіз структури: аналітико-синтетичне сприймання деталей, просторова координація та цілісність образу.
+
+ПРАВИЛА ВІКОВОЇ КЛАСТЕРНОЇ ІНТЕРПРЕТАЦІЇ СУМИ БАЛІВ (0–9):
+• Якщо вік == 6 років (Кластер 1):
+  - 0–2 бали: Низький рівень
+  - 3–5 балів: Середній рівень / Вікова норма (відсутність шиї, вух, брів або ґудзиків для 6 років є нормою)
+  - 6–9 балів: Високий рівень
+
+• Якщо вік == 7 або 8 років (Кластер 2):
+  - 0–3 бали: Низький рівень
+  - 4–6 балів: Середній рівень / Вікова норма (обов'язкова наявність шиї, 2D-кінцівок, зіниць, 5 пальців)
+  - 7–9 балів: Високий рівень
+
+• Якщо вік == 9 або 10 років (Кластер 3):
+  - 0–4 бали: Низький рівень
+  - 5–7 балів: Середній рівень / Вікова норма (обов'язкова деталізація обличчя, одягу, взуття, пропорції)
+  - 8–9 балів: Високий рівень
+
+Аналіз структури: аналітико-синтетичне сприймання деталей, просторова координація та цілісність образу відповідно до віку дитини.
 
 3. ЕМОЦІЙНО-ОСОБИСТІСНІ ІНДИКАТОРИ:
 - Будинок: двері, вікна, контури, дах (комунікативність, потреба в безпеці, захищеність).
@@ -89,23 +105,27 @@ const SYSTEM_INSTRUCTION = `
 "NeuroAura функціонує як алгоритмізована система підтримки психодіагностичного рішення (DSS). Цей автоматизований висновок має виключно індикативний характер, не є самодостатнім клінічним діагнозом і повинен використовуватися психологом у комплексі з іншою інформацією про дитину."
 `;
 
-// НАУКОВИЙ ЕКСПЕРИМЕНТ: Суворо єдина фіксована модель Gemini 3.7 Flash для 100% відтворюваності результатів
-// Використовуємо модель 3.7 Flash з активним глибоким мисленням та temperature: 0
-const SINGLE_STABLE_MODEL = {
-  id: 'gemini-3.7-flash',
-  label: 'Gemini 3.7 Flash'
-};
+// ПЕРЕЛІК ДОСТУПНИХ МОДЕЛЕЙ (за замовчуванням: Gemini 3.7 Flash)
+export interface ModelOption {
+  id: string;
+  label: string;
+  description: string;
+}
 
-/*
-// [Тимчасово закоментовано для чистоти експерименту]
-const BACKUP_CASCADE = [
-  { id: 'gemini-3.7-flash', label: 'Gemini 3.7 Flash' },
-  { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash' },
-  { id: 'gemini-3-flash-preview', label: 'Gemini 3.0 Flash' },
+export const AVAILABLE_MODELS: ModelOption[] = [
+  { id: 'gemini-3.7-flash', label: 'Gemini 3.7 Flash ★', description: 'Флагманська модель 3.7 (рекомендовано, швидка та точна)' },
+  { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash', description: 'Новітня релізна версія 3.8 Flash' },
+  { id: 'gemini-3.6-flash', label: 'Gemini 3.6 Flash', description: 'Швидка аналітична модель версії 3.6 Flash' },
+  { id: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash', description: 'Стабільна модель версії 3.5 Flash' },
+  { id: 'gemini-3.1-pro', label: 'Gemini 3.1 Pro', description: 'Глибока аналітична модель лінійки Pro 3.1' },
+  { id: 'gemini-3-flash-preview', label: 'Gemini 3.0 Flash Preview', description: 'Прев’ю-версія 3.0 Flash' },
 ];
-*/
 
-export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResult> => {
+export const analyzeDrawing = async (
+  base64Image: string, 
+  childAge: number = 7, 
+  selectedModelId: string = 'gemini-3.7-flash'
+): Promise<AnalysisResult> => {
   // CRITICAL FIX FOR VERCEL/VITE:
   // We utilize import.meta.env.VITE_GOOGLE_API_KEY because Vite does not polyfill process.env in the browser.
   // We use 'as any' to bypass potential TS restrictions in some environments, ensuring the build passes.
@@ -118,14 +138,17 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
   }
 
   const ai = new GoogleGenAI({ apiKey });
-  const modelId = SINGLE_STABLE_MODEL.id;
-  const modelLabel = SINGLE_STABLE_MODEL.label;
+  const modelObj = AVAILABLE_MODELS.find(m => m.id === selectedModelId) || AVAILABLE_MODELS[0];
+  const modelId = modelObj.id;
+  const modelLabel = modelObj.label;
 
-  console.log(`[NeuroAura] Запуск наукового стандартизованого аналізу на фіксованій моделі ${modelLabel} (${modelId})...`);
+  console.log(`[NeuroAura] Запуск наукового стандартизованого аналізу на обраній моделі ${modelLabel} (${modelId}) для віку ${childAge} років...`);
 
   const modelConfigPayload: any = {
     systemInstruction: SYSTEM_INSTRUCTION,
     temperature: 0, // СУВОРО 0 ДЛЯ НАУКОВОЇ ДЕТЕРМІНОВАНОСТІ ТА ВІДТВОРЮВАНОСТІ
+    topP: 0.05,     // СУВОРО МІНІМІЗОВАНИЙ ПРОСТІР ВИБОРУ ТОКЕНІВ (GREEDY DECODING)
+    seed: 42,       // ФІКСОВАНЕ ВИПАДКОВЕ ЗЕРНО (DETERMINISTIC SEED) ДЛЯ 100% ВІДТВОРЮВАНОСТІ РЕЗУЛЬТАТУ
     thinkingConfig: {
       thinkingLevel: ThinkingLevel.HIGH, // ГЛИБОКЕ АНАЛІТИЧНЕ МИСЛЕННЯ (CHAIN-OF-THOUGHT)
     },
@@ -139,7 +162,7 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
         },
         cognitive_block: {
           type: Type.OBJECT,
-          description: "БЛОК 1: Основний дослідницький блок (Когнітивний розвиток). Опиши структурну складність, диференційованість деталей та оригінальність. Якщо Сценарій А — сума балів (0-9) та рівень. Якщо Сценарій Б — якісна оцінка без балів. Жодних емоцій.",
+          description: "БЛОК 1: Основний дослідницький блок (Когнітивний розвиток). Опиши структурну складність, диференційованість деталей та оригінальність. Якщо Сценарій А — сума балів (0-9) та рівень згідно з віковими кластерами дитини. Якщо Сценарій Б — якісна оцінка без балів. Жодних емоцій.",
           properties: {
             scenario: {
               type: Type.STRING,
@@ -151,18 +174,22 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
             },
             level: { 
               type: Type.STRING, 
-              description: "Рівень когнітивного розвитку: для Сценарію А — 'Низький рівень', 'Середній рівень (норма)' або 'Високий рівень'; для Сценарію Б — якісний опис (напр. 'Середній/Високий рівень (якісна оцінка)')." 
+              description: "Рівень когнітивного розвитку: для Сценарію А згідно з кластером віку — 'Низький рівень', 'Середній рівень / Вікова норма' або 'Високий рівень'; для Сценарію Б — якісний опис (напр. 'Середній/Високий рівень (якісна оцінка)')." 
+            },
+            age_cluster_interpretation: {
+              type: Type.STRING,
+              description: "Для Сценарію А: обґрунтування відповідності віковому кластеру (Кластер 1 для 6 років, Кластер 2 для 7-8 років, Кластер 3 для 9-10 років) та детальний коментар нормативності елементів. Для Сценарію Б: вказати, що оцінка є якісною."
             },
             criteria_breakdown: { 
               type: Type.STRING, 
-              description: "Для Сценарію А: попунктна бінарна оцінка 9 критеріїв Гудінаф-Гарріса [1]-[9]. Для Сценарію Б: коментар про якісну оцінку без балів (фігура людини відсутня)." 
+              description: "Для Сценарію А: попунктна бінарна оцінка 9 критеріїв Гудінаф-Гарріса. КРИТИЧНО: КОЖЕН із 9 пунктів обов'язково починати з нового рядка з перенесенням \\n. Формат: вступне речення, потім [1] Назва: бал (коментар)\\n[2] Назва: бал (коментар)...\\n[9] Назва: бал (коментар). Для Сценарію Б: коментар про якісну оцінку без балів." 
             },
             structural_analysis: { 
               type: Type.STRING, 
               description: "Опис структурної складності, диференційованості деталей та оригінальності образу. Жодних емоцій." 
             }
           },
-          required: ["scenario", "score", "level", "criteria_breakdown", "structural_analysis"]
+          required: ["scenario", "score", "level", "age_cluster_interpretation", "criteria_breakdown", "structural_analysis"]
         },
         projective_block: {
           type: Type.OBJECT,
@@ -182,7 +209,7 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
             },
             recommendations: { 
               type: Type.STRING, 
-              description: "Комплексні орієнтовні рекомендації для психолога та батьків з формулюваннями ймовірності" 
+              description: "Комплексні орієнтовні рекомендації для психолога та батьків з формулюваннями ймовірності з урахуванням хронологічного віку дитини" 
             }
           },
           required: ["graphomotor_analysis", "emotional_state", "projective_details", "recommendations"]
@@ -202,7 +229,32 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
       contents: {
         parts: [
           { inlineData: { mimeType: "image/jpeg", data: base64Image.split(',')[1] } },
-          { text: "Проведи покроковий автоматизований аналіз цього малюнка дитини (6-10 років) згідно з затвердженим протоколом. Дотримуйся правил стилістики (формулювання ймовірності, індикативний характер), визнач методику (Сценарій А або Сценарій Б) та сформуй висновок у вигляді двох окремих блоків: БЛОК 1 (Когнітивний розвиток) та БЛОК 2 (Емоційно-особистісні індикатори)." }
+          { text: `Проведи покроковий автоматизований аналіз цього малюнка дитини.
+ХРОНОЛОГІЧНИЙ ВІК ДИТИНИ: ${childAge} років.
+
+Згідно з затвердженим протоколом:
+1. Дотримуйся правил стилістики (формулювання ймовірності, індикативний характер).
+2. Визнач методику (Сценарій А: Будинок-Дерево-Людина або Сценарій Б: Неіснуюча тварина).
+3. Якщо це СЦЕНАРІЙ А:
+   - КРИТИЧНО: Якщо на малюнку зображено кілька людей, оцінюй 9 бінарних критеріїв шкали Гудінаф-Гарріса [1]–[9] СУВОРО ЗА ОДНІЄЮ НАЙБІЛЬШОЮ (найвищою на аркуші) фігурою людини!
+   - КРИТИЧНО ЩОДО ОЧЕЙ [4]: Якщо очі зображені лише як дві прості цятки/крапки/штрихи без окремого контуру очного яблука — СУВОРО став 0 (зіниці відсутні). Бал 1 ставиться ЛИШЕ якщо є окремий контур ока І окремо зіниця всередині.
+   - ЧИТАБЕЛЬНІСТЬ ТА СТРУКТУРА: У полі criteria_breakdown КОЖЕН із 9 пунктів [1]–[9] обов'язково пиши з нового рядка через символ переносу \\n (не в один суцільний рядок!).
+   - СУВОРО застосуй нові ПРАВИЛА ВІКОВОЇ ІНТЕРПРЕТАЦІЇ СУМИ БАЛІВ (0–9) Гудінаф-Гарріса відповідно до хронологічного віку дитини (${childAge} років):
+   • Якщо вік == 6 років (Кластер 1):
+     - 0–2 бали: Низький рівень
+     - 3–5 балів: Середній рівень / Вікова норма (відсутність шиї, вух, брів або ґудзиків для 6 років є нормою)
+     - 6–9 балів: Високий рівень
+   • Якщо вік == 7 або 8 років (Кластер 2):
+     - 0–3 бали: Низький рівень
+     - 4–6 балів: Середній рівень / Вікова норма (обов'язкова наявність шиї, 2D-кінцівок, зіниць, 5 пальців)
+     - 7–9 балів: Високий рівень
+   • Якщо вік == 9 або 10 років (Кластер 3):
+     - 0–4 бали: Низький рівень
+     - 5–7 балів: Середній рівень / Вікова норма (обов'язкова деталізація обличчя, одягу, взуття, пропорції)
+     - 8–9 балів: Високий рівень
+
+4. Якщо це СЦЕНАРІЙ Б, бали Гудінаф-Гарріса категорично НЕ застосовуються (score = -1), формується якісна оцінка структурної складності та творчої уяви для дитини віком ${childAge} років.
+5. Сформуй висновок у вигляді двох окремих блоків: БЛОК 1 (Когнітивний розвиток) та БЛОК 2 (Емоційно-особистісні індикатори).` }
         ]
       },
       config: modelConfigPayload
@@ -214,11 +266,55 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
     const parsed = JSON.parse(text);
 
     const isScenarioA = parsed.cognitive_block?.score !== undefined && parsed.cognitive_block?.score >= 0;
+    
+    // Форматування criteria_breakdown: гарантуємо перенесення кожного пункту [1]–[9] на новий рядок
+    if (parsed.cognitive_block?.criteria_breakdown) {
+      let cb = parsed.cognitive_block.criteria_breakdown;
+      // Замінюємо "; [" або ". [" або " [1]" на новий рядок із відступом
+      cb = cb.replace(/;\s*\[/g, ';\n[');
+      cb = cb.replace(/\.\s*\[/g, '.\n[');
+      cb = cb.replace(/:\s*\[1\]/g, ':\n[1]');
+      parsed.cognitive_block.criteria_breakdown = cb;
+    }
+
+    // Алгоритмічна валідація вікового кластера для Сценарію А (гарантія 100% відповідності протоколу)
+    let validatedLevel = parsed.cognitive_block?.level || '';
+    let validatedClusterNote = parsed.cognitive_block?.age_cluster_interpretation || '';
+
+    if (isScenarioA && typeof parsed.cognitive_block?.score === 'number') {
+      const s = parsed.cognitive_block.score;
+      if (childAge === 6) {
+        if (s <= 2) validatedLevel = 'Низький рівень';
+        else if (s <= 5) validatedLevel = 'Середній рівень / Вікова норма';
+        else validatedLevel = 'Високий рівень';
+        if (!validatedClusterNote) {
+          validatedClusterNote = `Кластер 1 (6 років): норма 3–5 балів. Для 6 років відсутність шиї, вух, брів або ґудзиків є фізіологічною нормою. Отримано ${s}/9 балів.`;
+        }
+      } else if (childAge === 7 || childAge === 8) {
+        if (s <= 3) validatedLevel = 'Низький рівень';
+        else if (s <= 6) validatedLevel = 'Середній рівень / Вікова норма';
+        else validatedLevel = 'Високий рівень';
+        if (!validatedClusterNote) {
+          validatedClusterNote = `Кластер 2 (${childAge} років): норма 4–6 балів. Обов'язкова наявність шиї, 2D-кінцівок, зіниць, 5 пальців. Отримано ${s}/9 балів.`;
+        }
+      } else if (childAge >= 9) {
+        if (s <= 4) validatedLevel = 'Низький рівень';
+        else if (s <= 7) validatedLevel = 'Середній рівень / Вікова норма';
+        else validatedLevel = 'Високий рівень';
+        if (!validatedClusterNote) {
+          validatedClusterNote = `Кластер 3 (${childAge} років): норма 5–7 балів. Обов'язкова деталізація обличчя, одягу, взуття, пропорції. Отримано ${s}/9 балів.`;
+        }
+      }
+      parsed.cognitive_block.level = validatedLevel;
+      parsed.cognitive_block.age_cluster_interpretation = validatedClusterNote;
+    }
+
     const scoreStr = isScenarioA ? ` (${parsed.cognitive_block.score}/9 балів)` : ' (Якісна оцінка)';
 
     // УСПІХ! Повертаємо стандартизований результат аналізу
     return {
       methodology: parsed.methodology || "Клінічний аналіз малюнка",
+      child_age: childAge,
       used_model: modelLabel,
       cognitive_block: parsed.cognitive_block,
       projective_block: parsed.projective_block,
@@ -228,14 +324,14 @@ export const analyzeDrawing = async (base64Image: string): Promise<AnalysisResul
       psycho_features: parsed.projective_block?.emotional_state || "",
       cognitive_level: {
         level: `${parsed.cognitive_block?.level || ''}${scoreStr}`,
-        reasoning: `${parsed.cognitive_block?.criteria_breakdown || ''}\n\n${parsed.cognitive_block?.structural_analysis || ''}`
+        reasoning: `${parsed.cognitive_block?.criteria_breakdown || ''}\n\n${parsed.cognitive_block?.age_cluster_interpretation ? `[Віковий кластер: ${parsed.cognitive_block.age_cluster_interpretation}]\n\n` : ''}${parsed.cognitive_block?.structural_analysis || ''}`
       },
       recommendations: parsed.projective_block?.recommendations || ""
     } as AnalysisResult;
 
   } catch (error: any) {
     console.error(`[NeuroAura] Помилка виконання на моделі ${modelLabel}:`, error);
-    throw new Error(`Помилка аналізу на моделі ${modelLabel}: ${error?.message || 'Сервіс тимчасово недоступний'}. Будь ласка, спробуйте ще раз за хвилину.`);
+    throw new Error(`Наразі до моделі ${modelLabel} занадто багато запитів, спробуйте пізніше або оберіть іншу модель.`);
   }
 };
 

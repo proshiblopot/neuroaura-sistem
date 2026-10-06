@@ -12,6 +12,7 @@ export interface CognitiveBlock {
   level: string; // Рівень когнітивного розвитку
   criteria_breakdown?: string; // 9 критеріїв кодування (для Сценарію А)
   structural_analysis: string; // Структурна складність, диференційованість деталей та оригінальність
+  age_cluster_interpretation?: string; // Кластерна вікова інтерпретація за Гудінаф-Гаррісом
 }
 
 export interface ProjectiveBlock {
@@ -23,6 +24,7 @@ export interface ProjectiveBlock {
 
 export interface AnalysisResult {
   methodology: string;
+  child_age?: number;
   used_model?: string;
   cognitive_block: CognitiveBlock;
   projective_block: ProjectiveBlock;

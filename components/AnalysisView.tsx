@@ -22,6 +22,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({ status, result }) =>
 NEUROAURA - ЗВІТ НЕЙРОПСИХОЛОГІЧНОГО АНАЛІЗУ
 Дата: ${date} о ${time}
 Методика / Об'єкти: ${result.methodology}
+Хронологічний вік дитини: ${result.child_age ? `${result.child_age} років` : '6–10 років'}
 Модель аналізу: ${result.used_model || 'Автоматичний вибір'}
 ==================================================
 
@@ -29,7 +30,7 @@ NEUROAURA - ЗВІТ НЕЙРОПСИХОЛОГІЧНОГО АНАЛІЗУ
 --------------------------------------------------
 Оцінка: ${scoreText}
 Рівень когнітивного розвитку: ${levelText}
-
+${result.cognitive_block?.age_cluster_interpretation ? `Віковий кластер та інтерпретація: ${result.cognitive_block.age_cluster_interpretation}\n` : ''}
 Критерії кодування / Оцінка структури:
 ${result.cognitive_block?.criteria_breakdown || result.cognitive_level?.reasoning || ''}
 
@@ -149,14 +150,19 @@ ${result.dss_note || "NeuroAura функціонує як алгоритмізо
               {result.methodology}
             </p>
           </div>
-          {result.used_model && (
-            <div className="sm:self-center flex-shrink-0 pl-10 sm:pl-0">
+          <div className="sm:self-center flex flex-wrap items-center gap-2 pl-10 sm:pl-0">
+            {result.child_age && (
+              <div className="inline-flex items-center gap-1.5 bg-teal-50 text-teal-800 px-3.5 py-1.5 rounded-full border border-teal-200 text-sm font-bold shadow-xs">
+                <span>🎂 Вік: {result.child_age} років</span>
+              </div>
+            )}
+            {result.used_model && (
               <div className="inline-flex items-center gap-2 bg-[#F3F0FF] text-[#4B0082] px-3.5 py-1.5 rounded-full border border-[#4B0082]/20 text-sm font-semibold shadow-xs">
                 <Cpu className="w-4 h-4 text-[#4B0082]" />
                 <span>Модель: {result.used_model}</span>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* БЛОК 1: ОСНОВНИЙ ДОСЛІДНИЦЬКИЙ БЛОК (КОГНІТИВНИЙ РОЗВИТОК) */}
@@ -190,7 +196,7 @@ ${result.dss_note || "NeuroAura функціонує як алгоритмізо
           </div>
 
           {/* Cognitive Level Banner */}
-          <div className="rounded-xl p-4 mb-6 bg-[#F8F6FF] border border-[#E4DCFC] flex items-center gap-3">
+          <div className="rounded-xl p-4 mb-4 bg-[#F8F6FF] border border-[#E4DCFC] flex items-center gap-3">
             <CheckCircle2 className="w-6 h-6 text-[#4B0082] flex-shrink-0" />
             <div>
               <span className="text-sm font-semibold text-slate-500">Висновок когнітивного розвитку:</span>
@@ -200,9 +206,24 @@ ${result.dss_note || "NeuroAura функціонує як алгоритмізо
             </div>
           </div>
 
+          {/* Age Cluster Interpretation Note */}
+          {cogBlock?.age_cluster_interpretation && (
+            <div className="rounded-xl p-4 mb-6 bg-teal-50/70 border border-teal-200 flex items-start gap-3">
+              <span className="text-xl">📊</span>
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-teal-800 block mb-0.5">
+                  Вікова кластерна інтерпретація шкали Гудінаф-Гарріса ({result.child_age ? `${result.child_age} років` : 'норматив'}):
+                </span>
+                <p className="text-sm text-teal-900 font-medium leading-relaxed">
+                  {cogBlock.age_cluster_interpretation}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Criteria breakdown */}
           {cogBlock?.criteria_breakdown && (
-            <div className="mb-6 bg-slate-50 rounded-xl p-5 border border-slate-200/70">
+            <div className="mb-6 bg-slate-50/80 rounded-xl p-5 border border-slate-200/70">
               <div className="flex items-center gap-2 mb-3 text-slate-800 font-bold text-base">
                 <Activity className="w-5 h-5 text-[#4B0082]" />
                 <span>
@@ -211,8 +232,20 @@ ${result.dss_note || "NeuroAura функціонує як алгоритмізо
                     : "Оцінка когнітивних компонентів образу:"}
                 </span>
               </div>
-              <div className="text-slate-700 leading-relaxed text-base whitespace-pre-line pl-7">
-                {cogBlock.criteria_breakdown}
+              <div className="space-y-1.5 pl-1 sm:pl-7">
+                {cogBlock.criteria_breakdown.split('\n').filter(line => line.trim().length > 0).map((line, idx) => {
+                  const isCriterion = /^\s*\[\d\]/.test(line);
+                  return (
+                    <div 
+                      key={idx} 
+                      className={isCriterion 
+                        ? "py-1 px-2.5 rounded-lg bg-white border border-slate-200/60 font-mono text-sm sm:text-base text-slate-800 shadow-2xs leading-relaxed" 
+                        : "text-slate-600 text-sm sm:text-base font-sans pb-1 leading-relaxed"}
+                    >
+                      {line.trim()}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
