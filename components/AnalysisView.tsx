@@ -30,7 +30,7 @@ NEUROAURA - ЗВІТ НЕЙРОПСИХОЛОГІЧНОГО АНАЛІЗУ
 --------------------------------------------------
 Оцінка: ${scoreText}
 Рівень когнітивного розвитку: ${levelText}
-${result.cognitive_block?.age_cluster_interpretation ? `Віковий кластер та інтерпретація: ${result.cognitive_block.age_cluster_interpretation}\n` : ''}
+${result.cognitive_block?.age_cluster_interpretation ? `${isScenarioA ? 'Віковий кластер (Гудінаф-Гарріс)' : 'Вікова відповідність'}: ${result.cognitive_block.age_cluster_interpretation}\n` : ''}
 Критерії кодування / Оцінка структури:
 ${result.cognitive_block?.criteria_breakdown || result.cognitive_level?.reasoning || ''}
 
@@ -212,7 +212,9 @@ ${result.dss_note || "NeuroAura функціонує як алгоритмізо
               <span className="text-xl">📊</span>
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-teal-800 block mb-0.5">
-                  Вікова кластерна інтерпретація шкали Гудінаф-Гарріса ({result.child_age ? `${result.child_age} років` : 'норматив'}):
+                  {hasNumericScore 
+                    ? `Вікова кластерна інтерпретація шкали Гудінаф-Гарріса (${result.child_age ? `${result.child_age} років` : 'норматив'}):`
+                    : `Вікова відповідність когнітивного розвитку (${result.child_age ? `${result.child_age} років` : 'норматив'}):`}
                 </span>
                 <p className="text-sm text-teal-900 font-medium leading-relaxed">
                   {cogBlock.age_cluster_interpretation}

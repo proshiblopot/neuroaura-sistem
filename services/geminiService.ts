@@ -126,15 +126,36 @@ export const analyzeDrawing = async (
   childAge: number = 7, 
   selectedModelId: string = 'gemini-3.7-flash'
 ): Promise<AnalysisResult> => {
-  // CRITICAL FIX FOR VERCEL/VITE:
-  // We utilize import.meta.env.VITE_GOOGLE_API_KEY because Vite does not polyfill process.env in the browser.
-  // We use 'as any' to bypass potential TS restrictions in some environments, ensuring the build passes.
-  // WARNING: Do not share code with API keys.
-  const apiKey = (import.meta as any).env.VITE_GOOGLE_API_KEY || (import.meta as any).env.GEMINI_API_KEY || (import.meta as any).env.VITE_GEMINI_API_KEY;
+  // УНІВЕРСАЛЬНИЙ БЕЗПЕЧНИЙ МЕТОД ОТРИМАННЯ КЛЮЧА:
+  // Працює на 100% як у Vercel / Vite (через import.meta.env.VITE_GOOGLE_API_KEY),
+  // так і в Google AI Studio пісочниці (через process.env або fallback змінні).
+  let apiKey = '';
+
+  try {
+    if (typeof import.meta !== 'undefined' && (import.meta as any).env) {
+      apiKey = (import.meta as any).env.VITE_GOOGLE_API_KEY || 
+               (import.meta as any).env.GEMINI_API_KEY || 
+               (import.meta as any).env.VITE_GEMINI_API_KEY || '';
+    }
+  } catch (e) {
+    // ігноруємо помилки доступу до import.meta
+  }
 
   if (!apiKey) {
-    console.error("CRITICAL ERROR: API Key is missing. Make sure VITE_GOOGLE_API_KEY is set in Vercel Environment Variables.");
-    throw new Error("API Key відсутній. Будь ласка, перевірте налаштування VITE_GOOGLE_API_KEY.");
+    try {
+      if (typeof process !== 'undefined' && process.env) {
+        apiKey = process.env.VITE_GOOGLE_API_KEY || 
+                 process.env.GEMINI_API_KEY || 
+                 process.env.API_KEY || '';
+      }
+    } catch (e) {
+      // ігноруємо помилки доступу до process
+    }
+  }
+
+  if (!apiKey) {
+    console.error("CRITICAL ERROR: API Key is missing. Make sure VITE_GOOGLE_API_KEY is set in Vercel Environment Variables or .env.");
+    throw new Error("API Key відсутній. Будь ласка, перевірте налаштування VITE_GOOGLE_API_KEY у Vercel або середовищі.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
