@@ -113,11 +113,12 @@ export interface ModelOption {
 }
 
 export const AVAILABLE_MODELS: ModelOption[] = [
-  { id: 'gemini-3.7-flash', label: 'Gemini 3.7 Flash ★', description: 'Флагманська модель 3.7 (рекомендовано, швидка та точна)' },
-  { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash', description: 'Новітня релізна версія 3.8 Flash' },
-  { id: 'gemini-3.6-flash', label: 'Gemini 3.6 Flash', description: 'Швидка аналітична модель версії 3.6 Flash' },
-  { id: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash', description: 'Стабільна модель версії 3.5 Flash' },
-  { id: 'gemini-3.1-pro', label: 'Gemini 3.1 Pro', description: 'Глибока аналітична модель лінійки Pro 3.1' },
+  { id: 'gemini-flash-latest', label: 'Gemini Flash Latest', description: 'Остання стабільна версія лінійки Flash' },
+  { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash', description: 'Версія 3.8 Flash' },
+  { id: 'gemini-3.7-flash', label: 'Gemini 3.7 Flash ★', description: 'Флагманська модель 3.7 Flash (рекомендовано)' },
+  { id: 'gemini-3.6-flash', label: 'Gemini 3.6 Flash', description: 'Версія 3.6 Flash' },
+  { id: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash', description: 'Версія 3.5 Flash' },
+  { id: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro', description: 'Модель лінійки Pro 3.1 Preview' },
   { id: 'gemini-3-flash-preview', label: 'Gemini 3.0 Flash Preview', description: 'Прев’ю-версія 3.0 Flash' },
 ];
 
@@ -291,10 +292,14 @@ export const analyzeDrawing = async (
     // Форматування criteria_breakdown: гарантуємо перенесення кожного пункту [1]–[9] на новий рядок
     if (parsed.cognitive_block?.criteria_breakdown) {
       let cb = parsed.cognitive_block.criteria_breakdown;
-      // Замінюємо "; [" або ". [" або " [1]" на новий рядок із відступом
+      // Перетворюємо буквальні рядки "\\n" на реальні переносу рядків '\n'
+      cb = cb.replace(/\\n/g, '\n');
+      // Замінюємо "; [" або ". [" або " [1]" або " [N]" на новий рядок із відступом
       cb = cb.replace(/;\s*\[/g, ';\n[');
       cb = cb.replace(/\.\s*\[/g, '.\n[');
       cb = cb.replace(/:\s*\[1\]/g, ':\n[1]');
+      // Якщо модель зліпила пункти без розділових знаків, наприклад ") [2]"
+      cb = cb.replace(/\)\s*\[/g, ')\n[');
       parsed.cognitive_block.criteria_breakdown = cb;
     }
 

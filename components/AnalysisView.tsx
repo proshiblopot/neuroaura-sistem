@@ -235,19 +235,25 @@ ${result.dss_note || "NeuroAura функціонує як алгоритмізо
                 </span>
               </div>
               <div className="space-y-1.5 pl-1 sm:pl-7">
-                {cogBlock.criteria_breakdown.split('\n').filter(line => line.trim().length > 0).map((line, idx) => {
-                  const isCriterion = /^\s*\[\d\]/.test(line);
-                  return (
-                    <div 
-                      key={idx} 
-                      className={isCriterion 
-                        ? "py-1 px-2.5 rounded-lg bg-white border border-slate-200/60 font-mono text-sm sm:text-base text-slate-800 shadow-2xs leading-relaxed" 
-                        : "text-slate-600 text-sm sm:text-base font-sans pb-1 leading-relaxed"}
-                    >
-                      {line.trim()}
-                    </div>
-                  );
-                })}
+                {cogBlock.criteria_breakdown
+                  .replace(/\\n/g, '\n')
+                  .replace(/;\s*\[/g, ';\n[')
+                  .replace(/\)\s*\[/g, ')\n[')
+                  .split('\n')
+                  .filter(line => line.trim().length > 0)
+                  .map((line, idx) => {
+                    const isCriterion = /^\s*\[\d\]/.test(line);
+                    return (
+                      <div 
+                        key={idx} 
+                        className={isCriterion 
+                          ? "py-1 px-2.5 rounded-lg bg-white border border-slate-200/60 font-mono text-sm sm:text-base text-slate-800 shadow-2xs leading-relaxed" 
+                          : "text-slate-600 text-sm sm:text-base font-sans pb-1 leading-relaxed"}
+                      >
+                        {line.trim()}
+                      </div>
+                    );
+                  })}
               </div>
             </div>
           )}
